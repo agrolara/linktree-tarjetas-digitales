@@ -1,14 +1,15 @@
 // ==============================================================================
-// LINKCARD PRO - LÓGICA DEL PANEL DE ADMINISTRACIÓN
+// LINKCARD PRO - LÓGICA DEL PANEL DE ADMINISTRACIÓN Y AUTENTICACIÓN
 // ==============================================================================
 
 let profiles = [];
 let isAutoSlug = true;
 let activeShareProfile = null;
+let currentQrInstance = null;
 
 // Inicialización cuando carga el DOM
 document.addEventListener('DOMContentLoaded', () => {
-  loadProfiles();
+  checkAuthState();
   setupLivePreviewListeners();
   lucide.createIcons();
 });
@@ -20,6 +21,116 @@ function refreshIcons() {
       lucide.createIcons();
     }
   }, 50);
+}
+
+// ------------------------------------------------------------------------------
+// GESTIÓN DE SESIÓN Y AUTENTICACIÓN
+// ------------------------------------------------------------------------------
+function getAuthToken() {
+  return localStorage.getItem('linkcard_token');
+}
+
+async function checkAuthState() {
+  const token = getAuthToken();
+  const landingView = document.getElementById('landingView');
+  const adminView = document.getElementById('adminView');
+
+  if (!token) {
+    landingView.classList.remove('hidden');
+    adminView.classList.add('hidden');
+    refreshIcons();
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/auth/check', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (res.ok) {
+      landingView.classList.add('hidden');
+      adminView.classList.remove('hidden');
+      await loadProfiles();
+    } else {
+      localStorage.removeItem('linkcard_token');
+      landingView.classList.remove('hidden');
+      adminView.classList.add('hidden');
+    }
+  } catch (err) {
+    landingView.classList.remove('hidden');
+    adminView.classList.add('hidden');
+  }
+
+  refreshIcons();
+}
+
+function openLoginModal() {
+  const modal = document.getElementById('loginModal');
+  document.getElementById('loginError').classList.add('hidden');
+  modal.classList.remove('hidden');
+  document.getElementById('loginEmail').focus();
+  refreshIcons();
+}
+
+function closeLoginModal() {
+  document.getElementById('loginModal').classList.add('hidden');
+}
+
+async function handleLoginSubmit(e) {
+  e.preventDefault();
+
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const submitBtn = document.getElementById('loginSubmitBtn');
+  const submitText = document.getElementById('loginSubmitText');
+  const errorEl = document.getElementById('loginError');
+  const errorText = document.getElementById('loginErrorText');
+
+  errorEl.classList.add('hidden');
+  submitBtn.disabled = true;
+  submitText.textContent = 'Verificando...';
+
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Credenciales incorrectas');
+    }
+
+    // Guardar token
+    localStorage.setItem('linkcard_token', data.token);
+    closeLoginModal();
+    showToast('¡Bienvenido al Panel de Control!', 'success');
+
+    // Cambiar a vista administrativa
+    document.getElementById('landingView').classList.add('hidden');
+    document.getElementById('adminView').classList.remove('hidden');
+
+    await loadProfiles();
+  } catch (err) {
+    errorText.textContent = err.message;
+    errorEl.classList.remove('hidden');
+    refreshIcons();
+  } finally {
+    submitBtn.disabled = false;
+    submitText.textContent = 'Entrar al Panel de Control';
+  }
+}
+
+function handleLogout() {
+  if (confirm('¿Deseas cerrar tu sesión actual?')) {
+    localStorage.removeItem('linkcard_token');
+    document.getElementById('adminView').classList.add('hidden');
+    document.getElementById('landingView').classList.remove('hidden');
+    showToast('Sesión cerrada correctamente.', 'success');
+    refreshIcons();
+  }
 }
 
 // ------------------------------------------------------------------------------
@@ -67,7 +178,6 @@ function normalizeImageUrl(url) {
   const fileId = (driveFileMatch && driveFileMatch[1]) || (driveIdMatch && driveIdMatch[1]);
 
   if (fileId && (cleanUrl.includes('drive.google.com') || cleanUrl.includes('docs.google.com'))) {
-    // Redirigir a CDN directo de Google con alta resolución
     return `https://lh3.googleusercontent.com/d/${fileId}`;
   }
 
@@ -84,10 +194,20 @@ function normalizeImageUrl(url) {
 // ------------------------------------------------------------------------------
 async function loadProfiles() {
   const container = document.getElementById('profilesList');
+  const token = getAuthToken();
+
   try {
-    const response = await fetch('/api/profiles');
+    const response = await fetch('/api/profiles', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (response.status === 401) {
+      handleLogout();
+      return;
+    }
+
     if (!response.ok) throw new Error('Error al conectar con la API');
-    
+
     profiles = await response.json();
     renderProfilesList(profiles);
     updateStats(profiles);
@@ -101,7 +221,7 @@ async function loadProfiles() {
     console.error(error);
     container.innerHTML = `
       <div class="p-4 bg-rose-950/40 border border-rose-900 rounded-xl text-xs text-rose-300 text-center">
-        Error al cargar los perfiles. Verifica que el servidor esté activo.
+        Error al cargar los perfiles. Verifica la conexión con el servidor.
       </div>
     `;
   }
@@ -194,16 +314,16 @@ function renderProfilesList(items) {
 // SINCRONIZACIÓN EN VIVO CON EL SIMULADOR DE SMARTPHONE
 // ------------------------------------------------------------------------------
 function setupLivePreviewListeners() {
-  const form = document.getElementById('profileForm');
-
-  // Input listeners
-  document.getElementById('full_name').addEventListener('input', (e) => {
-    const val = e.target.value;
-    if (isAutoSlug) {
-      document.getElementById('slug').value = slugify(val);
-    }
-    updateLivePreview();
-  });
+  const fullNameEl = document.getElementById('full_name');
+  if (fullNameEl) {
+    fullNameEl.addEventListener('input', (e) => {
+      const val = e.target.value;
+      if (isAutoSlug) {
+        document.getElementById('slug').value = slugify(val);
+      }
+      updateLivePreview();
+    });
+  }
 
   const liveInputs = [
     'bio_title',
@@ -225,50 +345,62 @@ function setupLivePreviewListeners() {
     }
   });
 
-  document.getElementById('is_active').addEventListener('change', (e) => {
-    const dot = document.getElementById('statusDot');
-    if (e.target.checked) {
-      dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400';
-    } else {
-      dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-600';
-    }
-  });
+  const isActiveEl = document.getElementById('is_active');
+  if (isActiveEl) {
+    isActiveEl.addEventListener('change', (e) => {
+      const dot = document.getElementById('statusDot');
+      if (dot) {
+        if (e.target.checked) {
+          dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400';
+        } else {
+          dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-600';
+        }
+      }
+    });
+  }
 }
 
 function updateLivePreview(profileData = null) {
-  // Si nos pasan un objeto de datos explícito, usarlo; sino leer del formulario
+  const avatarInput = document.getElementById('avatar_url');
   const rawAvatar =
-    (profileData ? profileData.avatar_url : document.getElementById('avatar_url').value) ||
+    (profileData ? profileData.avatar_url : (avatarInput ? avatarInput.value : '')) ||
     'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&h=400&q=80';
 
   const normalizedAvatar = normalizeImageUrl(rawAvatar);
 
   const data = profileData || {
-    full_name: document.getElementById('full_name').value || 'Tu Nombre',
-    bio_title: document.getElementById('bio_title').value || 'Cargo o Profesión',
-    company_name: document.getElementById('company_name').value || '',
+    full_name: document.getElementById('full_name')?.value || 'Tu Nombre',
+    bio_title: document.getElementById('bio_title')?.value || 'Cargo o Profesión',
+    company_name: document.getElementById('company_name')?.value || '',
     avatar_url: normalizedAvatar,
-    phone: document.getElementById('phone').value || '',
-    email: document.getElementById('email').value || '',
-    theme_color: document.getElementById('theme_color').value || '#0284c7',
+    phone: document.getElementById('phone')?.value || '',
+    email: document.getElementById('email')?.value || '',
+    theme_color: document.getElementById('theme_color')?.value || '#0284c7',
   };
 
   // Avatar con referrerpolicy
   const avatarEl = document.getElementById('prevAvatar');
-  avatarEl.setAttribute('referrerpolicy', 'no-referrer');
-  avatarEl.src = normalizedAvatar;
-  avatarEl.style.borderColor = data.theme_color;
+  if (avatarEl) {
+    avatarEl.setAttribute('referrerpolicy', 'no-referrer');
+    avatarEl.src = normalizedAvatar;
+    avatarEl.style.borderColor = data.theme_color;
+  }
 
   // Textos
-  document.getElementById('prevName').textContent = data.full_name;
-  document.getElementById('prevTitle').textContent = data.bio_title;
+  const prevName = document.getElementById('prevName');
+  if (prevName) prevName.textContent = data.full_name;
+
+  const prevTitle = document.getElementById('prevTitle');
+  if (prevTitle) prevTitle.textContent = data.bio_title;
 
   const compEl = document.getElementById('prevCompany');
-  if (data.company_name) {
-    compEl.textContent = data.company_name;
-    compEl.classList.remove('hidden');
-  } else {
-    compEl.classList.add('hidden');
+  if (compEl) {
+    if (data.company_name) {
+      compEl.textContent = data.company_name;
+      compEl.classList.remove('hidden');
+    } else {
+      compEl.classList.add('hidden');
+    }
   }
 
   // Color del botón de WhatsApp
@@ -310,6 +442,7 @@ async function handleFormSubmit(e) {
 
   const id = document.getElementById('profileId').value;
   const isEditing = Boolean(id);
+  const token = getAuthToken();
 
   const rawAvatarUrl = document.getElementById('avatar_url').value.trim();
   const normalizedAvatar = normalizeImageUrl(rawAvatarUrl);
@@ -347,13 +480,20 @@ async function handleFormSubmit(e) {
 
     const res = await fetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(payload),
     });
 
     const data = await res.json();
 
     if (!res.ok) {
+      if (res.status === 401) {
+        handleLogout();
+        throw new Error('Sesión expirada. Por favor ingresa nuevamente.');
+      }
       throw new Error(data.error || 'Ocurrió un error al guardar');
     }
 
@@ -413,7 +553,6 @@ function editProfile(id) {
   updateLivePreview(profile);
   refreshIcons();
 
-  // Scroll suave al formulario
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -445,9 +584,21 @@ async function deleteProfile(id, name) {
     return;
   }
 
+  const token = getAuthToken();
+
   try {
-    const res = await fetch(`/api/profiles/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Error al eliminar');
+    const res = await fetch(`/api/profiles/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!res.ok) {
+      if (res.status === 401) {
+        handleLogout();
+        throw new Error('Sesión expirada.');
+      }
+      throw new Error('Error al eliminar');
+    }
 
     showToast('Perfil eliminado correctamente.', 'success');
     if (document.getElementById('profileId').value === id) {
@@ -455,12 +606,12 @@ async function deleteProfile(id, name) {
     }
     await loadProfiles();
   } catch (error) {
-    showToast('No se pudo eliminar el perfil.', 'error');
+    showToast(error.message || 'No se pudo eliminar el perfil.', 'error');
   }
 }
 
 // ------------------------------------------------------------------------------
-// MODAL DE COMPARTIR, QR Y DESCARGA PNG
+// MODAL DE COMPARTIR, QR Y DESCARGA PNG (100% LOCAL Y ROBUSTO)
 // ------------------------------------------------------------------------------
 function openShareModalById(id) {
   const profile = profiles.find((p) => p.id === id);
@@ -477,24 +628,23 @@ function openShareModal(profile) {
   document.getElementById('modalFullUrl').value = fullUrl;
   document.getElementById('modalOpenTabLink').href = `/u/${profile.slug}`;
 
-  // Renderizado del código QR en alta resolución sobre el canvas
-  const canvas = document.getElementById('qrCanvas');
-  QRCode.toCanvas(
-    canvas,
-    fullUrl,
-    {
-      width: 256,
-      margin: 1.5,
-      color: {
-        dark: '#090d16',
-        light: '#ffffff',
-      },
-      errorCorrectionLevel: 'H',
-    },
-    (err) => {
-      if (err) console.error('Error al generar código QR:', err);
-    }
-  );
+  // Renderizado del código QR usando librería local integrada
+  const container = document.getElementById('qrCodeContainer');
+  container.innerHTML = '';
+
+  try {
+    currentQrInstance = new QRCode(container, {
+      text: fullUrl,
+      width: 192,
+      height: 192,
+      colorDark: '#090d16',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H,
+    });
+  } catch (err) {
+    console.error('Error al generar código QR:', err);
+    container.innerHTML = '<p class="text-xs text-rose-500">Error al dibujar el código QR.</p>';
+  }
 
   modal.classList.remove('hidden');
   refreshIcons();
@@ -503,16 +653,31 @@ function openShareModal(profile) {
 function closeShareModal() {
   document.getElementById('shareModal').classList.add('hidden');
   activeShareProfile = null;
+  currentQrInstance = null;
 }
 
 // Descargar QR como imagen PNG
 function downloadQRCode() {
-  const canvas = document.getElementById('qrCanvas');
-  if (!canvas || !activeShareProfile) return;
+  const container = document.getElementById('qrCodeContainer');
+  if (!container || !activeShareProfile) return;
 
-  const image = canvas.toDataURL('image/png');
+  const canvas = container.querySelector('canvas');
+  const img = container.querySelector('img');
+
+  let dataUrl = '';
+  if (canvas) {
+    dataUrl = canvas.toDataURL('image/png');
+  } else if (img && img.src) {
+    dataUrl = img.src;
+  }
+
+  if (!dataUrl) {
+    showToast('Generando código QR, por favor espera un instante...', 'error');
+    return;
+  }
+
   const downloadLink = document.createElement('a');
-  downloadLink.href = image;
+  downloadLink.href = dataUrl;
   downloadLink.download = `qr-${activeShareProfile.slug}.png`;
   document.body.appendChild(downloadLink);
   downloadLink.click();
@@ -567,7 +732,7 @@ function showToast(message, type = 'success') {
   }, 3000);
 }
 
-// Escape de HTML para prevención XSS básica en renderizado
+// Escape de HTML para prevención XSS básica
 function escapeHtml(string) {
   if (!string) return '';
   return String(string)

@@ -91,11 +91,63 @@ function normalizeImageUrl(url) {
 }
 
 // ==========================================
+// AUTENTICACIÓN Y SEGURIDAD (ACCESO CLIENTES)
+// ==========================================
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'materiales.integrity@gmail.com';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Agro1280@';
+const AUTH_TOKEN = 'auth-linkcard-master-session-token-2026';
+
+// Endpoint para login de usuarios/clientes
+app.post('/api/auth/login', (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Debes proporcionar correo y contraseña.' });
+  }
+
+  if (email.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase() && password === ADMIN_PASSWORD) {
+    return res.json({
+      success: true,
+      token: AUTH_TOKEN,
+      user: {
+        email: ADMIN_EMAIL,
+        name: 'Materiales Integrity',
+      },
+    });
+  }
+
+  return res.status(401).json({
+    error: 'Acceso no autorizado. Este servicio es exclusivo para clientes con membresía activa.',
+  });
+});
+
+// Endpoint para verificar sesión activa
+app.get('/api/auth/check', (req, res) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (token === AUTH_TOKEN) {
+    return res.json({ authenticated: true, user: { email: ADMIN_EMAIL, name: 'Materiales Integrity' } });
+  }
+  return res.status(401).json({ authenticated: false });
+});
+
+// Middleware para proteger rutas de administración
+function requireAuth(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (token === AUTH_TOKEN) {
+    return next();
+  }
+  return res.status(401).json({
+    error: 'Acceso restringido. Por favor inicia sesión con tu membresía de cliente.',
+  });
+}
+
+// ==========================================
 // RUTAS DE LA API REST (SUPABASE + LOCAL)
 // ==========================================
 
-// 1. Obtener todos los perfiles
-app.get('/api/profiles', async (req, res) => {
+// 1. Obtener todos los perfiles (Protegido por autenticación)
+app.get('/api/profiles', requireAuth, async (req, res) => {
   try {
     if (useSupabase) {
       const response = await fetch(`${SUPABASE_URL}/rest/v1/linktree_profiles?select=*&order=updated_at.desc`, {
@@ -173,8 +225,8 @@ app.get('/api/profiles/:id', async (req, res) => {
   }
 });
 
-// 4. Crear nuevo perfil
-app.post('/api/profiles', async (req, res) => {
+// 4. Crear nuevo perfil (Protegido por autenticación)
+app.post('/api/profiles', requireAuth, async (req, res) => {
   try {
     const {
       slug,
@@ -267,8 +319,8 @@ app.post('/api/profiles', async (req, res) => {
   }
 });
 
-// 5. Actualizar un perfil
-app.put('/api/profiles/:id', async (req, res) => {
+// 5. Actualizar un perfil (Protegido por autenticación)
+app.put('/api/profiles/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -375,8 +427,8 @@ app.put('/api/profiles/:id', async (req, res) => {
   }
 });
 
-// 6. Eliminar un perfil
-app.delete('/api/profiles/:id', async (req, res) => {
+// 6. Eliminar un perfil (Protegido por autenticación)
+app.delete('/api/profiles/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
