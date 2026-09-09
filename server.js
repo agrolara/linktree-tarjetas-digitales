@@ -91,32 +91,63 @@ function normalizeImageUrl(url) {
 }
 
 // ==========================================
-// AUTENTICACIÓN Y SEGURIDAD (ACCESO CLIENTES)
+// AUTENTICACIÓN Y ROLES (SUPERADMIN & COLABORADORES)
 // ==========================================
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'materiales.integrity@gmail.com';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Agro1280@';
-const AUTH_TOKEN = 'auth-linkcard-master-session-token-2026';
+const SUPERADMIN_EMAIL = process.env.ADMIN_EMAIL || 'materiales.integrity@gmail.com';
+const SUPERADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Agro1280@';
 
-// Endpoint para login de usuarios/clientes
-app.post('/api/auth/login', (req, res) => {
+// Mapa de sesiones activas en memoria para tokens
+const activeSessions = new Map();
+
+// Endpoint de login (Superadministrador y Colaboradores)
+app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: 'Debes proporcionar correo y contraseña.' });
   }
 
-  if (email.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase() && password === ADMIN_PASSWORD) {
-    return res.json({
-      success: true,
-      token: AUTH_TOKEN,
-      user: {
-        email: ADMIN_EMAIL,
-        name: 'Materiales Integrity',
-      },
-    });
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanPass = password.trim();
+
+  // 1. Verificación directa de Superadmin
+  if (cleanEmail === SUPERADMIN_EMAIL.toLowerCase() && cleanPass === SUPERADMIN_PASSWORD) {
+    const token = 'token-superadmin-' + crypto.randomBytes(16).toString('hex');
+    const user = {
+      email: SUPERADMIN_EMAIL,
+      name: 'Mauricio Lara',
+      role: 'superadmin',
+    };
+    activeSessions.set(token, user);
+    return res.json({ success: true, token, user });
+  }
+
+  // 2. Verificación en base de datos Supabase (linktree_users)
+  try {
+    if (useSupabase) {
+      const response = await fetch(
+        `${SUPABASE_URL}/rest/v1/linktree_users?email=eq.${encodeURIComponent(cleanEmail)}&password=eq.${encodeURIComponent(cleanPass)}&select=*`,
+        { headers: getSupabaseHeaders() }
+      );
+      const data = await response.json();
+      if (data && data.length > 0) {
+        const dbUser = data[0];
+        const token = 'token-user-' + crypto.randomBytes(16).toString('hex');
+        const user = {
+          id: dbUser.id,
+          email: dbUser.email,
+          name: dbUser.name,
+          role: dbUser.role || 'collaborator',
+        };
+        activeSessions.set(token, user);
+        return res.json({ success: true, token, user });
+      }
+    }
+  } catch (err) {
+    console.error('Error al verificar usuario en Supabase:', err);
   }
 
   return res.status(401).json({
-    error: 'Acceso no autorizado. Este servicio es exclusivo para clientes con membresía activa.',
+    error: 'Credenciales inválidas. Acceso exclusivo para usuarios autorizados.',
   });
 });
 
@@ -124,23 +155,158 @@ app.post('/api/auth/login', (req, res) => {
 app.get('/api/auth/check', (req, res) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
-  if (token === AUTH_TOKEN) {
-    return res.json({ authenticated: true, user: { email: ADMIN_EMAIL, name: 'Materiales Integrity' } });
+
+  if (token && activeSessions.has(token)) {
+    const user = activeSessions.get(token);
+    return res.json({ authenticated: true, user });
   }
+
+  // Fallback para token fijo inicial si existiera
+  if (token === 'auth-linkcard-master-session-token-2026') {
+    return res.json({
+      authenticated: true,
+      user: { email: SUPERADMIN_EMAIL, name: 'Mauricio Lara', role: 'superadmin' },
+    });
+  }
+
   return res.status(401).json({ authenticated: false });
 });
 
-// Middleware para proteger rutas de administración
+// Middleware: requiere estar autenticado (superadmin o colaborador)
 function requireAuth(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
-  if (token === AUTH_TOKEN) {
+
+  if (token && (activeSessions.has(token) || token === 'auth-linkcard-master-session-token-2026')) {
+    req.user = activeSessions.get(token) || { email: SUPERADMIN_EMAIL, role: 'superadmin' };
     return next();
   }
   return res.status(401).json({
-    error: 'Acceso restringido. Por favor inicia sesión con tu membresía de cliente.',
+    error: 'Acceso restringido. Por favor inicia sesión.',
   });
 }
+
+// Middleware: requiere rol Superadmin exclusivamente
+function requireSuperadmin(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token) {
+    if (token === 'auth-linkcard-master-session-token-2026') {
+      req.user = { email: SUPERADMIN_EMAIL, role: 'superadmin' };
+      return next();
+    }
+    const session = activeSessions.get(token);
+    if (session && session.role === 'superadmin') {
+      req.user = session;
+      return next();
+    }
+  }
+  return res.status(403).json({
+    error: 'Permiso denegado. Esta acción requiere privilegios de Superadministrador.',
+  });
+}
+
+// ==========================================
+// RUTAS DE GESTIÓN DE USUARIOS / COLABORADORES
+// (Solo accesibles para el Superadmin)
+// ==========================================
+
+// Listar colaboradores
+app.get('/api/users', requireSuperadmin, async (req, res) => {
+  try {
+    if (useSupabase) {
+      const response = await fetch(
+        `${SUPABASE_URL}/rest/v1/linktree_users?select=id,email,name,role,created_at&order=created_at.desc`,
+        { headers: getSupabaseHeaders() }
+      );
+      const data = await response.json();
+      return res.json(data);
+    }
+    res.json([]);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener los usuarios.' });
+  }
+});
+
+// Crear nuevo colaborador
+app.post('/api/users', requireSuperadmin, async (req, res) => {
+  try {
+    const { email, password, name } = req.body;
+    if (!email || !password || !name) {
+      return res.status(400).json({ error: 'Nombre, correo y contraseña son obligatorios.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPass = password.trim();
+    const cleanName = name.trim();
+
+    if (useSupabase) {
+      // Verificar si ya existe
+      const checkRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/linktree_users?email=eq.${encodeURIComponent(cleanEmail)}&select=id`,
+        { headers: getSupabaseHeaders() }
+      );
+      const existing = await checkRes.json();
+      if (existing && existing.length > 0) {
+        return res.status(409).json({ error: `El correo "${cleanEmail}" ya está registrado.` });
+      }
+
+      const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/linktree_users`, {
+        method: 'POST',
+        headers: { ...getSupabaseHeaders(), Prefer: 'return=representation' },
+        body: JSON.stringify({
+          email: cleanEmail,
+          password: cleanPass,
+          name: cleanName,
+          role: 'collaborator',
+        }),
+      });
+
+      if (!insertRes.ok) {
+        throw new Error('Error al registrar colaborador en Supabase');
+      }
+
+      const created = await insertRes.json();
+      return res.status(201).json(created[0]);
+    }
+
+    res.status(501).json({ error: 'Base de datos no disponible para registrar usuarios.' });
+  } catch (error) {
+    console.error('Error al crear usuario:', error);
+    res.status(500).json({ error: error.message || 'Error al crear el colaborador.' });
+  }
+});
+
+// Eliminar un colaborador
+app.delete('/api/users/:id', requireSuperadmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (useSupabase) {
+      // Evitar que se elimine al superadmin
+      const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/linktree_users?id=eq.${id}&select=role,email`, {
+        headers: getSupabaseHeaders(),
+      });
+      const checkData = await checkRes.json();
+      if (checkData && checkData.length > 0 && checkData[0].role === 'superadmin') {
+        return res.status(400).json({ error: 'No es posible eliminar la cuenta del Superadministrador.' });
+      }
+
+      const delRes = await fetch(`${SUPABASE_URL}/rest/v1/linktree_users?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: getSupabaseHeaders(),
+      });
+
+      if (!delRes.ok) throw new Error('Error al eliminar usuario');
+      return res.json({ success: true, message: 'Colaborador eliminado correctamente.' });
+    }
+
+    res.status(404).json({ error: 'Usuario no encontrado.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al eliminar el colaborador.' });
+  }
+});
 
 // ==========================================
 // RUTAS DE LA API REST (SUPABASE + LOCAL)

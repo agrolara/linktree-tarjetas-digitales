@@ -6,6 +6,7 @@ let profiles = [];
 let isAutoSlug = true;
 let activeShareProfile = null;
 let currentQrInstance = null;
+let currentUser = null;
 
 // Inicialización cuando carga el DOM
 document.addEventListener('DOMContentLoaded', () => {
@@ -30,6 +31,30 @@ function getAuthToken() {
   return localStorage.getItem('linkcard_token');
 }
 
+function updateUserRoleUI(user) {
+  const roleBadge = document.getElementById('userRoleBadge');
+  const tabUsersBtn = document.getElementById('tabUsersBtn');
+
+  if (user) {
+    const isSuper = user.role === 'superadmin';
+    if (roleBadge) {
+      roleBadge.textContent = isSuper
+        ? 'Superadministrador'
+        : `Colaborador (${user.name || user.email})`;
+      roleBadge.className = isSuper
+        ? 'text-xs text-cyan-400 font-semibold hidden sm:block'
+        : 'text-xs text-slate-400 hidden sm:block';
+    }
+    if (tabUsersBtn) {
+      if (isSuper) {
+        tabUsersBtn.classList.remove('hidden');
+      } else {
+        tabUsersBtn.classList.add('hidden');
+      }
+    }
+  }
+}
+
 async function checkAuthState() {
   const token = getAuthToken();
   const landingView = document.getElementById('landingView');
@@ -48,11 +73,15 @@ async function checkAuthState() {
     });
 
     if (res.ok) {
+      const data = await res.json();
+      currentUser = data.user;
+      updateUserRoleUI(currentUser);
       landingView.classList.add('hidden');
       adminView.classList.remove('hidden');
       await loadProfiles();
     } else {
       localStorage.removeItem('linkcard_token');
+      currentUser = null;
       landingView.classList.remove('hidden');
       adminView.classList.add('hidden');
     }
@@ -105,6 +134,8 @@ async function handleLoginSubmit(e) {
 
     // Guardar token
     localStorage.setItem('linkcard_token', data.token);
+    currentUser = data.user;
+    updateUserRoleUI(currentUser);
     closeLoginModal();
     showToast('¡Bienvenido al Panel de Control!', 'success');
 
@@ -126,6 +157,7 @@ async function handleLoginSubmit(e) {
 function handleLogout() {
   if (confirm('¿Deseas cerrar tu sesión actual?')) {
     localStorage.removeItem('linkcard_token');
+    currentUser = null;
     document.getElementById('adminView').classList.add('hidden');
     document.getElementById('landingView').classList.remove('hidden');
     showToast('Sesión cerrada correctamente.', 'success');
@@ -701,6 +733,199 @@ async function copyModalUrl() {
     input.select();
     document.execCommand('copy');
     showToast('Enlace copiado.', 'success');
+  }
+}
+
+// ------------------------------------------------------------------------------
+// GESTIÓN DE COLABORADORES & PESTAÑAS (SUPERADMINISTRADOR)
+// ------------------------------------------------------------------------------
+function switchAdminTab(tab) {
+  const cardsSection = document.getElementById('cardsViewSection');
+  const usersSection = document.getElementById('usersViewSection');
+  const tabCardsBtn = document.getElementById('tabCardsBtn');
+  const tabUsersBtn = document.getElementById('tabUsersBtn');
+
+  if (tab === 'users') {
+    cardsSection.classList.add('hidden');
+    usersSection.classList.remove('hidden');
+
+    tabUsersBtn.className = 'px-3 py-1.5 rounded-lg bg-cyan-600 text-white shadow-sm transition';
+    tabCardsBtn.className = 'px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition';
+
+    loadUsers();
+  } else {
+    usersSection.classList.add('hidden');
+    cardsSection.classList.remove('hidden');
+
+    tabCardsBtn.className = 'px-3 py-1.5 rounded-lg bg-cyan-600 text-white shadow-sm transition';
+    tabUsersBtn.className = 'px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition';
+  }
+  refreshIcons();
+}
+
+async function loadUsers() {
+  const listEl = document.getElementById('usersList');
+  const token = getAuthToken();
+  if (!listEl) return;
+
+  listEl.innerHTML = `
+    <div class="text-center py-8 text-slate-500 text-xs">
+      <i data-lucide="loader-2" class="w-5 h-5 mx-auto mb-2 animate-spin text-cyan-500"></i>
+      Cargando lista de colaboradores...
+    </div>
+  `;
+  refreshIcons();
+
+  try {
+    const res = await fetch('/api/users', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error('No tienes permisos o ocurrió un error al obtener colaboradores.');
+    const users = await res.json();
+
+    if (!users || users.length === 0) {
+      listEl.innerHTML = `
+        <div class="text-center py-10 px-4 border border-dashed border-slate-800 rounded-2xl">
+          <i data-lucide="users" class="w-8 h-8 mx-auto text-slate-600 mb-2"></i>
+          <p class="text-xs text-slate-400 font-medium">No hay colaboradores registrados aún.</p>
+          <p class="text-[11px] text-slate-600 mt-1">Crea cuentas para tu equipo con el botón 'Nuevo Colaborador'.</p>
+        </div>
+      `;
+      refreshIcons();
+      return;
+    }
+
+    listEl.innerHTML = users.map(u => {
+      const isSuper = u.role === 'superadmin';
+      const badge = isSuper
+        ? '<span class="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">Superadmin</span>'
+        : '<span class="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Colaborador</span>';
+
+      const deleteBtn = isSuper ? '' : `
+        <button type="button" onclick="deleteUser('${u.id}', '${escapeHtml(u.name)}')" title="Revocar acceso"
+          class="p-2 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 hover:text-rose-300 border border-rose-900/40 transition">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+        </button>
+      `;
+
+      const dateFormatted = u.created_at ? new Date(u.created_at).toLocaleDateString('es-CL') : 'Activo';
+
+      return `
+        <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 hover:border-slate-700 transition flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-cyan-400 font-bold text-sm shrink-0">
+              ${escapeHtml((u.name || u.email || 'U')[0].toUpperCase())}
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <h4 class="text-xs font-bold text-white truncate">${escapeHtml(u.name || 'Sin Nombre')}</h4>
+                ${badge}
+              </div>
+              <p class="text-[11px] text-slate-400 truncate">${escapeHtml(u.email)}</p>
+              <span class="text-[10px] text-slate-500">Registrado el ${dateFormatted}</span>
+            </div>
+          </div>
+          <div>
+            ${deleteBtn}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    refreshIcons();
+  } catch (err) {
+    listEl.innerHTML = `
+      <div class="p-4 bg-rose-950/40 border border-rose-900 rounded-xl text-xs text-rose-300 text-center">
+        ${escapeHtml(err.message)}
+      </div>
+    `;
+  }
+}
+
+function openCreateUserModal() {
+  const form = document.getElementById('createUserForm');
+  if (form) form.reset();
+  const modal = document.getElementById('createUserModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    document.getElementById('newUserName')?.focus();
+  }
+  refreshIcons();
+}
+
+function closeCreateUserModal() {
+  const modal = document.getElementById('createUserModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function handleCreateUserSubmit(e) {
+  e.preventDefault();
+  const name = document.getElementById('newUserName').value.trim();
+  const email = document.getElementById('newUserEmail').value.trim();
+  const password = document.getElementById('newUserPassword').value.trim();
+  const submitBtn = document.getElementById('createUserSubmitBtn');
+  const token = getAuthToken();
+
+  if (!name || !email || !password) {
+    showToast('Todos los campos son requeridos.', 'error');
+    return;
+  }
+
+  if (password.length < 6) {
+    showToast('La contraseña debe tener al menos 6 caracteres.', 'error');
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Guardando...';
+
+  try {
+    const res = await fetch('/api/users', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ name, email, password })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Error al registrar colaborador');
+    }
+
+    showToast(`Colaborador "${name}" registrado con éxito!`, 'success');
+    closeCreateUserModal();
+    await loadUsers();
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Guardar Colaborador';
+  }
+}
+
+async function deleteUser(id, name) {
+  if (!confirm(`¿Estás seguro de revocar el acceso a ${name}? Ya no podrá iniciar sesión.`)) {
+    return;
+  }
+
+  const token = getAuthToken();
+  try {
+    const res = await fetch(`/api/users/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Error al eliminar');
+    }
+
+    showToast(`Acceso revocado para ${name}.`, 'success');
+    await loadUsers();
+  } catch (err) {
+    showToast(err.message, 'error');
   }
 }
 
