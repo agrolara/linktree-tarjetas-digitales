@@ -257,13 +257,13 @@
             </div>
           </div>
 
-          <!-- Selector de Pestañas: Tarjetas / Colaboradores -->
+          <!-- Selector de Pestañas: Tarjetas / Clientes -->
           <div class="hidden sm:flex items-center bg-slate-900 border border-slate-800 rounded-xl p-1 gap-1 text-xs font-medium">
             <button id="tabCardsBtn" onclick="switchAdminTab('cards')" class="px-3 py-1.5 rounded-lg bg-cyan-600 text-white shadow-sm transition">
               Tarjetas Digitales
             </button>
             <button id="tabUsersBtn" onclick="switchAdminTab('users')" class="hidden px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition">
-              Colaboradores
+              Clientes
             </button>
           </div>
         </div>
@@ -625,36 +625,36 @@
       </div>
     </main>
 
-    <!-- CONTENEDOR 2: GESTIÓN DE COLABORADORES (EXCLUSIVO SUPERADMIN) -->
+    <!-- CONTENEDOR 2: GESTIÓN DE CLIENTES (EXCLUSIVO SUPERADMIN) -->
     <main id="usersViewSection" class="hidden flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       
-      <!-- Encabezado de Colaboradores -->
+      <!-- Encabezado de Clientes -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div>
           <h2 class="text-2xl font-black text-white flex items-center gap-2.5">
             <i data-lucide="users" class="w-6 h-6 text-cyan-400"></i>
-            <span>Gestión de Colaboradores</span>
+            <span>Gestión de Clientes</span>
           </h2>
-          <p class="text-sm text-slate-400 mt-1">Crea cuentas de acceso para que tu equipo pueda ingresar y ayudarte a crear perfiles.</p>
+          <p class="text-sm text-slate-400 mt-1">Crea y administra las cuentas de tus clientes. Puedes consultar sus contraseñas para recordarles su acceso si lo extravían.</p>
         </div>
 
         <button onclick="openCreateUserModal()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-semibold shadow-md transition">
           <i data-lucide="user-plus" class="w-4 h-4"></i>
-          <span>Nuevo Colaborador</span>
+          <span>Nuevo Cliente</span>
         </button>
       </div>
 
-      <!-- Lista de Colaboradores -->
+      <!-- Lista de Clientes -->
       <div class="bg-slate-900/70 backdrop-blur-md border border-slate-800 rounded-2xl p-6 shadow-xl">
         <h3 class="text-sm font-semibold text-white mb-4 flex items-center gap-2">
           <i data-lucide="shield" class="w-4 h-4 text-cyan-400"></i>
-          <span>Usuarios con Acceso Autorizado</span>
+          <span>Clientes Registrados & Credenciales de Acceso</span>
         </h3>
 
         <div id="usersList" class="space-y-3">
           <div class="text-center py-8 text-slate-500 text-xs">
             <i data-lucide="loader-2" class="w-5 h-5 mx-auto mb-2 animate-spin text-cyan-500"></i>
-            Cargando lista de colaboradores...
+            Cargando lista de clientes...
           </div>
         </div>
       </div>
@@ -723,7 +723,7 @@
   </div>
 
   <!-- ==============================================================================
-       MODAL: CREAR NUEVO COLABORADOR (EXCLUSIVO SUPERADMIN)
+       MODAL: CREAR NUEVO CLIENTE (EXCLUSIVO SUPERADMIN)
        ============================================================================== -->
   <div id="createUserModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl relative text-left">
@@ -736,21 +736,21 @@
           <i data-lucide="user-plus" class="w-5 h-5"></i>
         </div>
         <div>
-          <h3 class="text-base font-bold text-white">Nuevo Colaborador</h3>
-          <p class="text-xs text-slate-400">Crea credenciales para tu asistente o socio.</p>
+          <h3 class="text-base font-bold text-white">Nuevo Cliente</h3>
+          <p class="text-xs text-slate-400">Crea las credenciales de acceso para tu cliente.</p>
         </div>
       </div>
 
       <form id="createUserForm" onsubmit="handleCreateUserSubmit(event)" class="space-y-4 mt-4">
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Nombre Completo</label>
-          <input type="text" id="newUserName" required placeholder="Ej: Juan Pérez"
+          <label class="block text-xs font-medium text-slate-300 mb-1">Nombre Completo del Cliente</label>
+          <input type="text" id="newUserName" required placeholder="Ej: Andrea Vidal"
             class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500">
         </div>
 
         <div>
           <label class="block text-xs font-medium text-slate-300 mb-1">Correo Electrónico (Usuario)</label>
-          <input type="email" id="newUserEmail" required placeholder="colaborador@correo.com"
+          <input type="email" id="newUserEmail" required placeholder="cliente@correo.com"
             class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500">
         </div>
 
@@ -765,7 +765,7 @@
             Cancelar
           </button>
           <button type="submit" id="createUserSubmitBtn" class="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-cyan-600 hover:bg-cyan-500 shadow-md">
-            Guardar Colaborador
+            Guardar Cliente
           </button>
         </div>
       </form>

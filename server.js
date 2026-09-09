@@ -208,16 +208,16 @@ function requireSuperadmin(req, res, next) {
 }
 
 // ==========================================
-// RUTAS DE GESTIÓN DE USUARIOS / COLABORADORES
+// RUTAS DE GESTIÓN DE CLIENTES / USUARIOS
 // (Solo accesibles para el Superadmin)
 // ==========================================
 
-// Listar colaboradores
+// Listar clientes (con contraseñas visibles para que el Superadmin pueda recordárselas)
 app.get('/api/users', requireSuperadmin, async (req, res) => {
   try {
     if (useSupabase) {
       const response = await fetch(
-        `${SUPABASE_URL}/rest/v1/linktree_users?select=id,email,name,role,created_at&order=created_at.desc`,
+        `${SUPABASE_URL}/rest/v1/linktree_users?select=id,email,name,role,password,created_at&order=created_at.desc`,
         { headers: getSupabaseHeaders() }
       );
       const data = await response.json();
@@ -229,7 +229,7 @@ app.get('/api/users', requireSuperadmin, async (req, res) => {
   }
 });
 
-// Crear nuevo colaborador
+// Crear nuevo cliente
 app.post('/api/users', requireSuperadmin, async (req, res) => {
   try {
     const { email, password, name } = req.body;
@@ -259,12 +259,12 @@ app.post('/api/users', requireSuperadmin, async (req, res) => {
           email: cleanEmail,
           password: cleanPass,
           name: cleanName,
-          role: 'collaborator',
+          role: 'client',
         }),
       });
 
       if (!insertRes.ok) {
-        throw new Error('Error al registrar colaborador en Supabase');
+        throw new Error('Error al registrar cliente en Supabase');
       }
 
       const created = await insertRes.json();
@@ -274,11 +274,11 @@ app.post('/api/users', requireSuperadmin, async (req, res) => {
     res.status(501).json({ error: 'Base de datos no disponible para registrar usuarios.' });
   } catch (error) {
     console.error('Error al crear usuario:', error);
-    res.status(500).json({ error: error.message || 'Error al crear el colaborador.' });
+    res.status(500).json({ error: error.message || 'Error al crear el cliente.' });
   }
 });
 
-// Eliminar un colaborador
+// Eliminar un cliente
 app.delete('/api/users/:id', requireSuperadmin, async (req, res) => {
   try {
     const { id } = req.params;
@@ -299,12 +299,12 @@ app.delete('/api/users/:id', requireSuperadmin, async (req, res) => {
       });
 
       if (!delRes.ok) throw new Error('Error al eliminar usuario');
-      return res.json({ success: true, message: 'Colaborador eliminado correctamente.' });
+      return res.json({ success: true, message: 'Cliente eliminado correctamente.' });
     }
 
     res.status(404).json({ error: 'Usuario no encontrado.' });
   } catch (error) {
-    res.status(500).json({ error: 'Error al eliminar el colaborador.' });
+    res.status(500).json({ error: 'Error al eliminar el cliente.' });
   }
 });
 
@@ -312,11 +312,20 @@ app.delete('/api/users/:id', requireSuperadmin, async (req, res) => {
 // RUTAS DE LA API REST (SUPABASE + LOCAL)
 // ==========================================
 
-// 1. Obtener todos los perfiles (Protegido por autenticación)
+// 1. Obtener perfiles (Aislamiento por cliente: cada cliente SOLO ve sus tarjetas)
 app.get('/api/profiles', requireAuth, async (req, res) => {
   try {
+    const isSuper = req.user && req.user.role === 'superadmin';
+    const userEmail = req.user ? req.user.email : null;
+
     if (useSupabase) {
-      const response = await fetch(`${SUPABASE_URL}/rest/v1/linktree_profiles?select=*&order=updated_at.desc`, {
+      let queryUrl = `${SUPABASE_URL}/rest/v1/linktree_profiles?select=*&order=updated_at.desc`;
+      // Si es cliente regular, filtramos estrictamente solo sus tarjetas
+      if (!isSuper && userEmail) {
+        queryUrl = `${SUPABASE_URL}/rest/v1/linktree_profiles?user_email=eq.${encodeURIComponent(userEmail)}&select=*&order=updated_at.desc`;
+      }
+
+      const response = await fetch(queryUrl, {
         headers: getSupabaseHeaders(),
       });
       if (!response.ok) throw new Error('Error al consultar Supabase');
@@ -325,8 +334,12 @@ app.get('/api/profiles', requireAuth, async (req, res) => {
     }
 
     const profiles = await getLocalProfiles();
-    profiles.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
-    res.json(profiles);
+    let filtered = profiles;
+    if (!isSuper && userEmail) {
+      filtered = profiles.filter((p) => p.user_email === userEmail);
+    }
+    filtered.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+    res.json(filtered);
   } catch (error) {
     console.error('Error al obtener perfiles:', error);
     res.status(500).json({ error: 'Error al obtener los perfiles.' });
@@ -439,6 +452,8 @@ app.post('/api/profiles', requireAuth, async (req, res) => {
       is_active: is_active !== false,
       created_at: now,
       updated_at: now,
+      user_email: req.user ? req.user.email : null,
+      user_id: req.user && req.user.id ? req.user.id : null,
     };
 
     if (useSupabase) {
@@ -485,10 +500,13 @@ app.post('/api/profiles', requireAuth, async (req, res) => {
   }
 });
 
-// 5. Actualizar un perfil (Protegido por autenticación)
+// 5. Actualizar un perfil (Protegido por autenticación y propiedad)
 app.put('/api/profiles/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
+    const isSuper = req.user && req.user.role === 'superadmin';
+    const userEmail = req.user ? req.user.email : null;
+
     const {
       slug,
       full_name,
@@ -509,6 +527,18 @@ app.put('/api/profiles/:id', requireAuth, async (req, res) => {
     const cleanSlug = sanitizeSlug(slug || full_name);
 
     if (useSupabase) {
+      // Si no es superadministrador, validar que la tarjeta le pertenece al usuario
+      if (!isSuper && userEmail) {
+        const checkOwnerRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/linktree_profiles?id=eq.${id}&user_email=eq.${encodeURIComponent(userEmail)}&select=id`,
+          { headers: getSupabaseHeaders() }
+        );
+        const ownerData = await checkOwnerRes.json();
+        if (!ownerData || ownerData.length === 0) {
+          return res.status(403).json({ error: 'No tienes permiso para modificar esta tarjeta digital.' });
+        }
+      }
+
       // Verificar si el slug colisiona con otro registro
       const checkRes = await fetch(
         `${SUPABASE_URL}/rest/v1/linktree_profiles?slug=eq.${cleanSlug}&id=neq.${id}&select=id`,
@@ -560,6 +590,10 @@ app.put('/api/profiles/:id', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Perfil no encontrado.' });
     }
 
+    if (!isSuper && userEmail && profiles[index].user_email !== userEmail) {
+      return res.status(403).json({ error: 'No tienes permiso para modificar esta tarjeta.' });
+    }
+
     const slugConflict = profiles.some((p) => p.slug === cleanSlug && p.id !== id);
     if (slugConflict) {
       return res.status(409).json({ error: `El slug "${cleanSlug}" ya está en uso por otro perfil.` });
@@ -593,12 +627,26 @@ app.put('/api/profiles/:id', requireAuth, async (req, res) => {
   }
 });
 
-// 6. Eliminar un perfil (Protegido por autenticación)
+// 6. Eliminar un perfil (Protegido por autenticación y propiedad)
 app.delete('/api/profiles/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
+    const isSuper = req.user && req.user.role === 'superadmin';
+    const userEmail = req.user ? req.user.email : null;
 
     if (useSupabase) {
+      // Si no es superadministrador, validar que la tarjeta le pertenece al usuario
+      if (!isSuper && userEmail) {
+        const checkOwnerRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/linktree_profiles?id=eq.${id}&user_email=eq.${encodeURIComponent(userEmail)}&select=id`,
+          { headers: getSupabaseHeaders() }
+        );
+        const ownerData = await checkOwnerRes.json();
+        if (!ownerData || ownerData.length === 0) {
+          return res.status(403).json({ error: 'No tienes permiso para eliminar esta tarjeta digital.' });
+        }
+      }
+
       const deleteRes = await fetch(`${SUPABASE_URL}/rest/v1/linktree_profiles?id=eq.${id}`, {
         method: 'DELETE',
         headers: getSupabaseHeaders(),
@@ -610,11 +658,16 @@ app.delete('/api/profiles/:id', requireAuth, async (req, res) => {
     }
 
     const profiles = await getLocalProfiles();
-    const filtered = profiles.filter((p) => p.id !== id);
-    if (filtered.length === profiles.length) {
+    const target = profiles.find((p) => p.id === id);
+    if (!target) {
       return res.status(404).json({ error: 'Perfil no encontrado.' });
     }
 
+    if (!isSuper && userEmail && target.user_email !== userEmail) {
+      return res.status(403).json({ error: 'No tienes permiso para eliminar esta tarjeta.' });
+    }
+
+    const filtered = profiles.filter((p) => p.id !== id);
     await saveLocalProfiles(filtered);
     res.json({ success: true, message: 'Perfil eliminado correctamente.' });
   } catch (error) {
