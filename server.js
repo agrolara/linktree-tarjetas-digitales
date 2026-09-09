@@ -68,6 +68,28 @@ function sanitizeSlug(text) {
     .replace(/^-+|-+$/g, ''); // Quitar guiones iniciales o finales
 }
 
+// Convertidor de URLs de Google Drive, Dropbox, etc. a enlaces directos de imagen
+function normalizeImageUrl(url) {
+  if (!url) return '';
+  const cleanUrl = url.trim();
+
+  // Google Drive
+  const driveFileMatch = cleanUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  const driveIdMatch = cleanUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  const fileId = (driveFileMatch && driveFileMatch[1]) || (driveIdMatch && driveIdMatch[1]);
+
+  if (fileId && (cleanUrl.includes('drive.google.com') || cleanUrl.includes('docs.google.com'))) {
+    return `https://lh3.googleusercontent.com/d/${fileId}`;
+  }
+
+  // Dropbox
+  if (cleanUrl.includes('dropbox.com')) {
+    return cleanUrl.replace(/[?&]dl=0/, '?raw=1');
+  }
+
+  return cleanUrl;
+}
+
 // ==========================================
 // RUTAS DE LA API REST (SUPABASE + LOCAL)
 // ==========================================
@@ -187,7 +209,7 @@ app.post('/api/profiles', async (req, res) => {
       full_name: full_name.trim(),
       bio_title: (bio_title || '').trim(),
       company_name: (company_name || '').trim(),
-      avatar_url: (avatar_url || '').trim(),
+      avatar_url: normalizeImageUrl(avatar_url),
       phone: (phone || '').trim(),
       whatsapp_message: (whatsapp_message || '').trim(),
       email: (email || '').trim(),
@@ -284,7 +306,7 @@ app.put('/api/profiles/:id', async (req, res) => {
         full_name: full_name?.trim(),
         bio_title: bio_title?.trim(),
         company_name: company_name?.trim(),
-        avatar_url: avatar_url?.trim(),
+        avatar_url: avatar_url !== undefined ? normalizeImageUrl(avatar_url) : undefined,
         phone: phone?.trim(),
         whatsapp_message: whatsapp_message?.trim(),
         email: email?.trim(),
@@ -331,7 +353,7 @@ app.put('/api/profiles/:id', async (req, res) => {
       full_name: full_name !== undefined ? full_name.trim() : profiles[index].full_name,
       bio_title: bio_title !== undefined ? bio_title.trim() : profiles[index].bio_title,
       company_name: company_name !== undefined ? company_name.trim() : profiles[index].company_name,
-      avatar_url: avatar_url !== undefined ? avatar_url.trim() : profiles[index].avatar_url,
+      avatar_url: avatar_url !== undefined ? normalizeImageUrl(avatar_url) : profiles[index].avatar_url,
       phone: phone !== undefined ? phone.trim() : profiles[index].phone,
       whatsapp_message: whatsapp_message !== undefined ? whatsapp_message.trim() : profiles[index].whatsapp_message,
       email: email !== undefined ? email.trim() : profiles[index].email,

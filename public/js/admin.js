@@ -55,6 +55,31 @@ function toggleAutoSlug() {
 }
 
 // ------------------------------------------------------------------------------
+// NORMALIZACIÓN DE IMÁGENES (GOOGLE DRIVE, DROPBOX, ETC.)
+// ------------------------------------------------------------------------------
+function normalizeImageUrl(url) {
+  if (!url) return '';
+  const cleanUrl = url.trim();
+
+  // Google Drive (Enlaces de compartir, vista previa, visor web)
+  const driveFileMatch = cleanUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  const driveIdMatch = cleanUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  const fileId = (driveFileMatch && driveFileMatch[1]) || (driveIdMatch && driveIdMatch[1]);
+
+  if (fileId && (cleanUrl.includes('drive.google.com') || cleanUrl.includes('docs.google.com'))) {
+    // Redirigir a CDN directo de Google con alta resolución
+    return `https://lh3.googleusercontent.com/d/${fileId}`;
+  }
+
+  // Dropbox (reemplazar dl=0 por raw=1 para streaming directo)
+  if (cleanUrl.includes('dropbox.com')) {
+    return cleanUrl.replace(/[?&]dl=0/, '?raw=1');
+  }
+
+  return cleanUrl;
+}
+
+// ------------------------------------------------------------------------------
 // CARGA Y GESTIÓN DE PERFILES DESDE LA API
 // ------------------------------------------------------------------------------
 async function loadProfiles() {
@@ -107,7 +132,7 @@ function renderProfilesList(items) {
 
   container.innerHTML = items
     .map((profile) => {
-      const avatarSrc = profile.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80';
+      const avatarSrc = normalizeImageUrl(profile.avatar_url) || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80';
       const statusBadge = profile.is_active
         ? '<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Activo</span>'
         : '<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">Inactivo</span>';
@@ -115,7 +140,7 @@ function renderProfilesList(items) {
       return `
         <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 hover:border-slate-700 transition-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div class="flex items-center gap-3 min-w-0">
-            <img src="${avatarSrc}" alt="${profile.full_name}" 
+            <img src="${avatarSrc}" alt="${profile.full_name}" referrerpolicy="no-referrer"
               onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80'"
               class="w-11 h-11 rounded-full object-cover border-2 shadow-sm shrink-0" style="border-color: ${profile.theme_color || '#0284c7'}">
             <div class="min-w-0">
@@ -212,21 +237,26 @@ function setupLivePreviewListeners() {
 
 function updateLivePreview(profileData = null) {
   // Si nos pasan un objeto de datos explícito, usarlo; sino leer del formulario
+  const rawAvatar =
+    (profileData ? profileData.avatar_url : document.getElementById('avatar_url').value) ||
+    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&h=400&q=80';
+
+  const normalizedAvatar = normalizeImageUrl(rawAvatar);
+
   const data = profileData || {
     full_name: document.getElementById('full_name').value || 'Tu Nombre',
     bio_title: document.getElementById('bio_title').value || 'Cargo o Profesión',
     company_name: document.getElementById('company_name').value || '',
-    avatar_url:
-      document.getElementById('avatar_url').value ||
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&h=400&q=80',
+    avatar_url: normalizedAvatar,
     phone: document.getElementById('phone').value || '',
     email: document.getElementById('email').value || '',
     theme_color: document.getElementById('theme_color').value || '#0284c7',
   };
 
-  // Avatar
+  // Avatar con referrerpolicy
   const avatarEl = document.getElementById('prevAvatar');
-  avatarEl.src = data.avatar_url;
+  avatarEl.setAttribute('referrerpolicy', 'no-referrer');
+  avatarEl.src = normalizedAvatar;
   avatarEl.style.borderColor = data.theme_color;
 
   // Textos
@@ -281,11 +311,14 @@ async function handleFormSubmit(e) {
   const id = document.getElementById('profileId').value;
   const isEditing = Boolean(id);
 
+  const rawAvatarUrl = document.getElementById('avatar_url').value.trim();
+  const normalizedAvatar = normalizeImageUrl(rawAvatarUrl);
+
   const payload = {
     full_name: document.getElementById('full_name').value.trim(),
     bio_title: document.getElementById('bio_title').value.trim(),
     company_name: document.getElementById('company_name').value.trim(),
-    avatar_url: document.getElementById('avatar_url').value.trim(),
+    avatar_url: normalizedAvatar,
     slug: slugify(document.getElementById('slug').value),
     phone: document.getElementById('phone').value.trim(),
     whatsapp_message: document.getElementById('whatsapp_message').value.trim(),

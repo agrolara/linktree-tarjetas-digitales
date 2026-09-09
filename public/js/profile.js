@@ -64,6 +64,28 @@ async function loadPublicProfile(slug) {
   }
 }
 
+// Normalizador de enlaces de Google Drive, Dropbox, etc.
+function normalizeImageUrl(url) {
+  if (!url) return '';
+  const cleanUrl = url.trim();
+
+  // Google Drive
+  const driveFileMatch = cleanUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  const driveIdMatch = cleanUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  const fileId = (driveFileMatch && driveFileMatch[1]) || (driveIdMatch && driveIdMatch[1]);
+
+  if (fileId && (cleanUrl.includes('drive.google.com') || cleanUrl.includes('docs.google.com'))) {
+    return `https://lh3.googleusercontent.com/d/${fileId}`;
+  }
+
+  // Dropbox
+  if (cleanUrl.includes('dropbox.com')) {
+    return cleanUrl.replace(/[?&]dl=0/, '?raw=1');
+  }
+
+  return cleanUrl;
+}
+
 // Renderizado de datos del perfil en el DOM
 function renderProfile(p) {
   // 1. Título de página y tema de color dinámico
@@ -71,10 +93,23 @@ function renderProfile(p) {
   const themeColor = p.theme_color || '#0284c7';
   document.documentElement.style.setProperty('--theme-color', themeColor);
 
-  // 2. Avatar
+  // 2. Avatar normalizado
   const avatarImg = document.getElementById('avatarImg');
-  avatarImg.src = p.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&h=300&q=80';
+  avatarImg.setAttribute('referrerpolicy', 'no-referrer');
+  const normalizedAvatar = normalizeImageUrl(p.avatar_url);
+  avatarImg.src = normalizedAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&h=300&q=80';
   avatarImg.style.borderColor = themeColor;
+
+  // Si falla el CDN principal de Google, intentar con el endpoint de thumbnail de alta resolución
+  const driveIdMatch = (p.avatar_url || '').match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || (p.avatar_url || '').match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (driveIdMatch && driveIdMatch[1]) {
+    avatarImg.onerror = function() {
+      this.onerror = function() {
+        this.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&h=300&q=80';
+      };
+      this.src = `https://drive.google.com/thumbnail?id=${driveIdMatch[1]}&sz=w1000`;
+    };
+  }
 
   // 3. Textos principales
   document.getElementById('fullName').textContent = p.full_name;
