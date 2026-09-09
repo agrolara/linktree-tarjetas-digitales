@@ -1,0 +1,24 @@
+{
+  "name": "linktree-tarjeta-digital",
+  "version": "1.0.0",
+  "description": "Plataforma moderna para crear y administrar perfiles de enlaces y tarjetas digitales con QR y vCard.",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "linktree",
+    "vcard",
+    "qr-code",
+    "digital-business-card",
+    "tailwind"
+  ],
+  "author": "Antigravity",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}

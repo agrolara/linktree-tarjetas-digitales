@@ -1,0 +1,82 @@
+/* Estilos personalizados y utilidades de interfaz */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Mockup de marco de Smartphone */
+.smartphone-mockup {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  height: 640px;
+  background: #090d16;
+  border-radius: 44px;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.4), 0 0 0 10px #1e293b, 0 0 0 12px #334155;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.smartphone-notch {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 110px;
+  height: 20px;
+  background: #0f172a;
+  border-radius: 20px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.smartphone-camera {
+  width: 8px;
+  height: 8px;
+  background: #1e293b;
+  border-radius: 50%;
+}
+
+.smartphone-screen {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding-top: 36px;
+  padding-bottom: 24px;
+  scrollbar-width: none; /* Firefox */
+}
+
+.smartphone-screen::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Transiciones suaves */
+.transition-card {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.transition-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Efecto de pulso suave para WhatsApp */
+@keyframes subtle-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.animate-subtle-pulse {
+  animation: subtle-pulse 3s infinite ease-in-out;
+}
+
+/* Toast flotante */
+#toast {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}

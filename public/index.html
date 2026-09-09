@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkCard Pro - Creador de Perfiles & Tarjetas Digitales</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- QRCode Library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="/css/custom.css">
+</head>
+<body class="min-h-full flex flex-col antialiased selection:bg-cyan-500 selection:text-white bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(14,165,233,0.15),rgba(255,255,255,0))]">
+
+  <!-- ==============================================================================
+       BARRA SUPERIOR DE NAVEGACIÓN
+       ============================================================================== -->
+  <header class="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <i data-lucide="layers" class="w-5 h-5 text-white"></i>
+        </div>
+        <div>
+          <span class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            LinkCard <span class="text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-medium">Pro</span>
+          </span>
+          <p class="text-xs text-slate-400 hidden sm:block">Perfiles de Enlaces & Tarjetas Digitales</p>
+        </div>
+      </div>
+
+      <!-- Métricas rápidas y botón de acción -->
+      <div class="flex items-center gap-4">
+        <div class="hidden md:flex items-center gap-3 text-xs">
+          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+            <span class="w-2 h-2 rounded-full bg-emerald-500 -ml-3"></span>
+            <span id="statActiveCount">0</span> Activos
+          </div>
+          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300">
+            <span class="text-slate-400">Total:</span>
+            <span id="statTotalCount" class="font-semibold text-white">0</span>
+          </div>
+        </div>
+
+        <button onclick="resetFormToCreate()" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 rounded-xl shadow-md shadow-cyan-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span>Nuevo Perfil</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==============================================================================
+       CONTENIDO PRINCIPAL: DOS COLUMNAS (FORMULARIO Y PREVIEW/LISTA)
+       ============================================================================== -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+      <!-- ==========================================================
+           COLUMNA IZQUIERDA: FORMULARIO DE GESTIÓN (7 COLUMNAS)
+           ========================================================== -->
+      <section class="lg:col-span-7 space-y-6">
+        <div class="bg-slate-900/70 backdrop-blur-md border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+          <!-- Indicador superior -->
+          <div class="flex items-center justify-between pb-6 border-b border-slate-800">
+            <div>
+              <h2 id="formTitle" class="text-xl font-bold text-white flex items-center gap-2">
+                <i data-lucide="user-plus" class="w-5 h-5 text-cyan-400"></i>
+                <span>Crear Nuevo Perfil</span>
+              </h2>
+              <p id="formSubtitle" class="text-sm text-slate-400 mt-1">Completa los datos para generar tu URL pública y código QR único.</p>
+            </div>
+            <button id="cancelEditBtn" onclick="resetFormToCreate()" class="hidden px-3 py-1.5 text-xs text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition">
+              Cancelar edición
+            </button>
+          </div>
+
+          <form id="profileForm" class="space-y-6 mt-6" onsubmit="handleFormSubmit(event)">
+            <input type="hidden" id="profileId" value="">
+
+            <!-- 1. IDENTIDAD BÁSICA -->
+            <div>
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-4 flex items-center gap-2">
+                <i data-lucide="id-card" class="w-4 h-4"></i>
+                1. Información Principal
+              </h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Nombre completo -->
+                <div class="sm:col-span-2">
+                  <label class="block text-xs font-medium text-slate-300 mb-1.5">Nombre Completo o Empresa <span class="text-rose-400">*</span></label>
+                  <input type="text" id="full_name" required placeholder="Ej: Carlos Lara o DevCraft Studio"
+                    class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
+                </div>
+
+                <!-- Subtítulo o Cargo -->
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1.5">Cargo o Subtítulo</label>
+                  <input type="text" id="bio_title" placeholder="Ej: Desarrollador Fullstack Senior"
+                    class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
+                </div>
+
+                <!-- Empresa -->
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1.5">Empresa (Opcional)</label>
+                  <input type="text" id="company_name" placeholder="Ej: DevCraft Studio"
+                    class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
+                </div>
+
+                <!-- Avatar URL -->
+                <div class="sm:col-span-2">
+                  <label class="block text-xs font-medium text-slate-300 mb-1.5">URL del Avatar o Logo</label>
+                  <div class="flex gap-2">
+                    <input type="url" id="avatar_url" placeholder="https://ejemplo.com/foto.jpg"
+                      class="flex-1 px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
+                    <button type="button" onclick="setSampleAvatar()" title="Usar avatar de muestra"
+                      class="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium transition flex items-center gap-1.5">
+                      <i data-lucide="image" class="w-4 h-4"></i>
+                      <span class="hidden sm:inline">Muestra</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. SLUG Y CONFIGURACIÓN PÚBLICA -->
+            <div class="pt-4 border-t border-slate-800/80">
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-4 flex items-center gap-2">
+                <i data-lucide="link-2" class="w-4 h-4"></i>
+                2. Enlace Público Único (Slug)
+              </h3>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1.5">URL Personalizada</label>
+                  <div class="flex items-center rounded-xl bg-slate-950 border border-slate-800 overflow-hidden focus-within:border-cyan-500 focus-within:ring-1 focus-within:ring-cyan-500 transition">
+                    <span class="px-3 text-xs text-slate-500 font-mono select-none bg-slate-900/60 border-r border-slate-800 py-2.5">/u/</span>
+                    <input type="text" id="slug" required placeholder="nombre-o-empresa"
+                      class="flex-1 px-3 py-2.5 bg-transparent text-sm text-cyan-300 font-mono placeholder-slate-600 focus:outline-none">
+                    <button type="button" id="autoSlugToggle" onclick="toggleAutoSlug()" title="Auto-generar slug"
+                      class="px-3 py-2 text-xs text-cyan-400 hover:text-cyan-300 font-medium">
+                      Auto
+                    </button>
+                  </div>
+                  <p class="text-[11px] text-slate-500 mt-1">Se generará automáticamente un slug limpio sin acentos ni espacios.</p>
+                </div>
+
+                <!-- Estado Activo/Inactivo -->
+                <div class="flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-400" id="statusDot"></div>
+                    <div>
+                      <p class="text-xs font-medium text-slate-200">Estado del Perfil</p>
+                      <p class="text-[11px] text-slate-500">Determina si la tarjeta está visible públicamente.</p>
+                    </div>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="is_active" checked class="sr-only peer">
+                    <div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. CANALES DE CONTACTO DIRECTO -->
+            <div class="pt-4 border-t border-slate-800/80">
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-4 flex items-center gap-2">
+                <i data-lucide="message-circle" class="w-4 h-4"></i>
+                3. Canales de Contacto Directo
+              </h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Teléfono -->
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1.5">Teléfono Móvil (con código país)</label>
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                      <i data-lucide="phone" class="w-4 h-4"></i>
+                    </div>
+                    <input type="tel" id="phone" placeholder="+56912345678"
+                      class="w-full pl-9 pr-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
+                  </div>
+                </div>
+
+                <!-- Email -->
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1.5">Correo Electrónico</label>
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                      <i data-lucide="mail" class="w-4 h-4"></i>
+                    </div>
+                    <input type="email" id="email" placeholder="contacto@ejemplo.com"
+                      class="w-full pl-9 pr-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
+                  </div>
+                </div>
+
+                <!-- Mensaje de WhatsApp -->
+                <div class="sm:col-span-2">
+                  <label class="block text-xs font-medium text-slate-300 mb-1.5">Mensaje predeterminado de WhatsApp (Opcional)</label>
+                  <input type="text" id="whatsapp_message" placeholder="¡Hola! Me gustaría cotizar un servicio contigo."
+                    class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
+                </div>
+
+                <!-- Sitio Web -->
+                <div class="sm:col-span-2">
+                  <label class="block text-xs font-medium text-slate-300 mb-1.5">Sitio Web</label>
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                      <i data-lucide="globe" class="w-4 h-4"></i>
+                    </div>
+                    <input type="url" id="website" placeholder="https://tusitio.com"
+                      class="w-full pl-9 pr-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. REDES SOCIALES -->
+            <div class="pt-4 border-t border-slate-800/80">
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-4 flex items-center gap-2">
+                <i data-lucide="share-2" class="w-4 h-4"></i>
+                4. Redes Sociales
+              </h3>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <!-- Instagram -->
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1.5">Instagram (Usuario)</label>
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 text-xs">@</span>
+                    <input type="text" id="instagram" placeholder="usuario"
+                      class="w-full pl-8 pr-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
+                  </div>
+                </div>
+
+                <!-- Facebook -->
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1.5">Facebook (URL o usuario)</label>
+                  <input type="text" id="facebook" placeholder="https://facebook.com/tuperfil"
+                    class="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
+                </div>
+
+                <!-- LinkedIn -->
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1.5">LinkedIn (URL o usuario)</label>
+                  <input type="text" id="linkedin" placeholder="https://linkedin.com/in/tuperfil"
+                    class="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. PERSONALIZACIÓN DE COLOR / TEMA -->
+            <div class="pt-4 border-t border-slate-800/80">
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-4 flex items-center gap-2">
+                <i data-lucide="palette" class="w-4 h-4"></i>
+                5. Color del Tema
+              </h3>
+              <div class="flex flex-wrap items-center gap-3">
+                <button type="button" onclick="setThemeColor('#0284c7')" class="w-8 h-8 rounded-full bg-[#0284c7] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Azul Océano"></button>
+                <button type="button" onclick="setThemeColor('#059669')" class="w-8 h-8 rounded-full bg-[#059669] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Verde Esmeralda"></button>
+                <button type="button" onclick="setThemeColor('#7c3aed')" class="w-8 h-8 rounded-full bg-[#7c3aed] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Violeta"></button>
+                <button type="button" onclick="setThemeColor('#db2777')" class="w-8 h-8 rounded-full bg-[#db2777] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Rosa Vibrante"></button>
+                <button type="button" onclick="setThemeColor('#78350f')" class="w-8 h-8 rounded-full bg-[#78350f] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Café Gourmet"></button>
+                <button type="button" onclick="setThemeColor('#0f172a')" class="w-8 h-8 rounded-full bg-[#0f172a] border border-slate-700 ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Negro Slate"></button>
+                
+                <div class="flex items-center gap-2 ml-auto">
+                  <span class="text-xs text-slate-400 font-mono">Hex:</span>
+                  <div class="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-xl">
+                    <input type="color" id="themeColorPicker" value="#0284c7" onchange="syncThemeColorFromPicker(this.value)" class="w-5 h-5 rounded cursor-pointer bg-transparent border-0">
+                    <input type="text" id="theme_color" value="#0284c7" maxlength="7" class="w-16 bg-transparent text-xs text-white font-mono uppercase focus:outline-none">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BOTONES DE ACCIÓN DEL FORMULARIO -->
+            <div class="pt-6 border-t border-slate-800 flex items-center justify-end gap-3">
+              <button type="button" onclick="resetFormToCreate()" class="px-4 py-2.5 rounded-xl border border-slate-800 text-slate-300 hover:bg-slate-800 text-sm font-medium transition">
+                Limpiar
+              </button>
+              <button type="submit" id="submitBtn" class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-medium text-sm shadow-lg shadow-cyan-600/25 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                <i data-lucide="check" class="w-4 h-4"></i>
+                <span id="submitBtnText">Guardar Perfil</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ==========================================================
+           COLUMNA DERECHA: SIMULADOR SMARTPHONE & LISTA DE PERFILES
+           ========================================================== -->
+      <section class="lg:col-span-5 space-y-8">
+        
+        <!-- SECCIÓN 1: VISTA PREVIA SMARTPHONE EN TIEMPO REAL -->
+        <div class="bg-slate-900/70 backdrop-blur-md border border-slate-800 rounded-2xl p-6 shadow-xl text-center">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+              <i data-lucide="smartphone" class="w-4 h-4 text-cyan-400"></i>
+              Simulador en Tiempo Real
+            </h3>
+            <span class="text-[11px] px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+              Vista Móvil
+            </span>
+          </div>
+
+          <!-- Marco del Smartphone -->
+          <div class="smartphone-mockup">
+            <div class="smartphone-notch">
+              <div class="smartphone-camera"></div>
+            </div>
+
+            <!-- Pantalla del Smartphone -->
+            <div class="smartphone-screen text-left p-4 flex flex-col justify-between" id="previewContainer">
+              <div>
+                <!-- Avatar & Perfil -->
+                <div class="flex flex-col items-center text-center mt-2 mb-4">
+                  <div class="relative mb-3">
+                    <img id="prevAvatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&h=400&q=80"
+                      alt="Avatar" class="w-20 h-20 rounded-full object-cover shadow-md border-2 border-cyan-500 transition-all">
+                  </div>
+                  <h4 id="prevName" class="text-base font-bold text-white tracking-tight">Carlos Lara</h4>
+                  <p id="prevTitle" class="text-xs text-slate-300 mt-0.5">Desarrollador Fullstack Senior</p>
+                  <span id="prevCompany" class="text-[10px] text-cyan-400 bg-cyan-950/60 border border-cyan-800/50 px-2 py-0.5 rounded-full mt-1.5 inline-block">
+                    DevCraft Studio
+                  </span>
+                </div>
+
+                <!-- Botón Principal: WhatsApp -->
+                <div class="mb-3">
+                  <div id="prevWhatsappBtn" class="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-emerald-600 text-white text-xs font-semibold shadow-md shadow-emerald-950 cursor-default">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2z"/></svg>
+                    <span>Contactar por WhatsApp</span>
+                  </div>
+                </div>
+
+                <!-- Botonera vertical Linktree -->
+                <div class="space-y-2 text-xs" id="prevButtonsList">
+                  <div class="flex items-center gap-3 p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60 text-slate-200">
+                    <i data-lucide="phone-call" class="w-3.5 h-3.5 text-cyan-400"></i>
+                    <span id="prevPhoneLabel">Llamar directo</span>
+                  </div>
+                  <div class="flex items-center gap-3 p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60 text-slate-200">
+                    <i data-lucide="mail" class="w-3.5 h-3.5 text-cyan-400"></i>
+                    <span id="prevEmailLabel">Enviar correo</span>
+                  </div>
+                  <div class="flex items-center gap-3 p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60 text-slate-200">
+                    <i data-lucide="globe" class="w-3.5 h-3.5 text-cyan-400"></i>
+                    <span>Visitar Sitio Web</span>
+                  </div>
+                  <div class="flex items-center gap-3 p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60 text-slate-200">
+                    <i data-lucide="instagram" class="w-3.5 h-3.5 text-pink-400"></i>
+                    <span>Instagram</span>
+                  </div>
+                </div>
+
+                <!-- Botón Guardar Contacto (vCard) -->
+                <div class="mt-4 pt-3 border-t border-slate-800">
+                  <div class="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-medium">
+                    <i data-lucide="contact" class="w-3.5 h-3.5 text-cyan-400"></i>
+                    <span>Guardar Contacto (.vcf)</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Footer mockup -->
+              <div class="text-center pt-3 text-[9px] text-slate-500">
+                LinkCard Pro &bull; Tarjeta Digital
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECCIÓN 2: LISTA DE PERFILES GUARDADOS -->
+        <div class="bg-slate-900/70 backdrop-blur-md border border-slate-800 rounded-2xl p-6 shadow-xl">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+              <i data-lucide="list" class="w-4 h-4 text-cyan-400"></i>
+              Perfiles Creados
+            </h3>
+            <span id="profilesBadgeCount" class="text-xs text-slate-400 bg-slate-800 px-2 py-0.5 rounded-md">
+              0 perfiles
+            </span>
+          </div>
+
+          <!-- Contenedor dinámico de perfiles -->
+          <div id="profilesList" class="space-y-3 max-h-[480px] overflow-y-auto pr-1">
+            <div class="text-center py-8 text-slate-500 text-xs">
+              <i data-lucide="loader-2" class="w-5 h-5 mx-auto mb-2 animate-spin text-cyan-500"></i>
+              Cargando perfiles...
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ==============================================================================
+       MODAL DE COMPARTIR Y DESCARGAR QR
+       ============================================================================== -->
+  <div id="shareModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative text-center">
+      
+      <!-- Botón de cierre -->
+      <button onclick="closeShareModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="w-12 h-12 mx-auto rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center mb-3">
+        <i data-lucide="qr-code" class="w-6 h-6"></i>
+      </div>
+
+      <h3 id="modalProfileName" class="text-lg font-bold text-white tracking-tight">Compartir Tarjeta Digital</h3>
+      <p id="modalProfileSlug" class="text-xs text-cyan-400 font-mono mt-0.5">/u/carlos-lara</p>
+
+      <!-- Contenedor del Canvas QR -->
+      <div class="my-5 p-4 bg-white rounded-2xl inline-block shadow-lg mx-auto">
+        <canvas id="qrCanvas" class="w-48 h-48 block"></canvas>
+      </div>
+
+      <!-- Enlace con botón de copiar -->
+      <div class="mb-4">
+        <label class="block text-[11px] font-medium text-slate-400 mb-1.5 text-left">Enlace Directo</label>
+        <div class="flex items-center bg-slate-950 border border-slate-800 rounded-xl overflow-hidden p-1">
+          <input type="text" id="modalFullUrl" readonly class="flex-1 px-3 text-xs bg-transparent text-slate-300 font-mono focus:outline-none">
+          <button id="copyUrlBtn" onclick="copyModalUrl()" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-medium transition">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span id="copyBtnText">Copiar</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Acciones principales -->
+      <div class="grid grid-cols-2 gap-3 pt-2">
+        <button id="downloadQrBtn" onclick="downloadQRCode()" class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-medium text-xs shadow-md shadow-cyan-600/20 transition hover:scale-[1.02] active:scale-[0.98]">
+          <i data-lucide="download" class="w-4 h-4"></i>
+          <span>Descargar QR (PNG)</span>
+        </button>
+
+        <a id="modalOpenTabLink" href="#" target="_blank" class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs border border-slate-700 transition">
+          <i data-lucide="external-link" class="w-4 h-4"></i>
+          <span>Abrir Perfil</span>
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==============================================================================
+       NOTIFICACIONES TOAST FLOTANTES
+       ============================================================================== -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 opacity-0 pointer-events-none transform translate-y-2 transition-all duration-300 flex items-center gap-2 px-4 py-3 rounded-xl shadow-2xl text-xs font-medium">
+    <i id="toastIcon" data-lucide="check-circle" class="w-4 h-4"></i>
+    <span id="toastMessage">Notificación</span>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="pageTitle">Tarjeta Digital</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="/css/custom.css">
+  <style>
+    :root {
+      --theme-color: #0284c7;
+    }
+    .theme-bg {
+      background-color: var(--theme-color);
+    }
+    .theme-border {
+      border-color: var(--theme-color);
+    }
+    .theme-text {
+      color: var(--theme-color);
+    }
+    .theme-shadow {
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+    }
+  </style>
+</head>
+<body class="min-h-full bg-slate-950 text-slate-100 flex flex-col justify-between antialiased selection:bg-cyan-500 selection:text-white bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(14,165,233,0.12),rgba(15,23,42,1))]">
+
+  <!-- ==============================================================================
+       ESTADO DE CARGA INICIAL
+       ============================================================================== -->
+  <div id="loadingState" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 text-slate-400 gap-3">
+    <div class="w-10 h-10 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+    <p class="text-xs tracking-wider uppercase">Cargando tarjeta digital...</p>
+  </div>
+
+  <!-- ==============================================================================
+       ESTADO DE ERROR O PERFIL INACTIVO / NO ENCONTRADO
+       ============================================================================== -->
+  <div id="errorState" class="hidden min-h-screen flex flex-col items-center justify-center px-4 text-center">
+    <div class="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mb-4">
+      <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+    </div>
+    <h1 id="errorTitle" class="text-xl font-bold text-white mb-2">Perfil no disponible</h1>
+    <p id="errorMessage" class="text-sm text-slate-400 max-w-sm mb-6">
+      El perfil que buscas no existe o se encuentra inactivo temporalmente.
+    </p>
+    <a href="/" class="px-5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-200 text-xs font-semibold transition">
+      Volver al Inicio
+    </a>
+  </div>
+
+  <!-- ==============================================================================
+       CONTENEDOR PRINCIPAL: VISTA PÚBLICA 100% MOBILE-FIRST
+       ============================================================================== -->
+  <main id="profileContent" class="hidden flex-1 w-full max-w-md mx-auto px-5 py-10 flex flex-col items-center justify-center">
+
+    <!-- 1. HEADER DEL PERFIL: AVATAR & INFORMACIÓN -->
+    <header class="text-center w-full flex flex-col items-center mb-8">
+      
+      <!-- Avatar con borde temático y brillo sutil -->
+      <div class="relative mb-4 group">
+        <div id="avatarRing" class="absolute -inset-1 rounded-full opacity-70 blur-md transition duration-500 group-hover:opacity-100 theme-bg"></div>
+        <img id="avatarImg" src="" alt="Avatar"
+          class="relative w-28 h-28 rounded-full object-cover border-4 bg-slate-900 shadow-2xl transition duration-300 transform group-hover:scale-105"
+          onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&h=300&q=80'">
+      </div>
+
+      <!-- Nombre y Cargo -->
+      <h1 id="fullName" class="text-2xl font-extrabold text-white tracking-tight sm:text-3xl mb-1">
+        Nombre Completo
+      </h1>
+      <p id="bioTitle" class="text-sm font-medium text-slate-300 max-w-xs leading-snug">
+        Cargo o Profesión
+      </p>
+
+      <!-- Badge de Empresa (opcional) -->
+      <div id="companyBadge" class="hidden mt-2.5">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-900/90 border border-slate-800 text-slate-300 shadow-sm">
+          <i data-lucide="briefcase" class="w-3.5 h-3.5 text-cyan-400"></i>
+          <span id="companyName">Empresa</span>
+        </span>
+      </div>
+
+    </header>
+
+    <!-- 2. BOTÓN PRINCIPAL DESTACADO: WHATSAPP DIRECTO -->
+    <div id="whatsappSection" class="w-full mb-5">
+      <a id="whatsappBtn" href="#" target="_blank" rel="noopener noreferrer"
+        class="group relative flex items-center justify-center gap-3 w-full py-4 px-6 rounded-2xl text-white font-bold text-sm sm:text-base shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] theme-bg theme-shadow animate-subtle-pulse">
+        <div class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+          <svg class="w-4 h-4 fill-current text-white" viewBox="0 0 24 24">
+            <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2zM17.5 14.8c-.24.68-1.2 1.3-1.66 1.36-.45.06-.9.11-2.9-.68-2.42-.96-3.98-3.41-4.1-3.57-.12-.16-.98-1.3-1-2.48-.02-1.18.6-1.76.84-2 .24-.24.52-.3.7-.3.18 0 .36 0 .52.01.17.01.4-.06.63.48.24.54.82 1.99.89 2.14.07.15.12.33.02.53-.1.2-.15.32-.3.49-.15.17-.32.38-.46.51-.15.15-.31.31-.13.62.18.31.8 1.31 1.71 2.12 1.17 1.04 2.15 1.36 2.46 1.51.31.15.49.13.67-.08.18-.21.77-.9 1-1.2.23-.3.46-.25.77-.13.31.12 1.98.93 2.32 1.1.34.17.57.25.65.39.08.14.08.82-.16 1.5z"/>
+          </svg>
+        </div>
+        <span>Contactar por WhatsApp</span>
+      </a>
+    </div>
+
+    <!-- 3. BOTONERA VERTICAL ESTILO LINKTREE -->
+    <div class="w-full space-y-3 mb-6" id="linksContainer">
+
+      <!-- Llamar directo -->
+      <a id="callBtn" href="#" class="hidden group flex items-center justify-between w-full p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-slate-700 text-slate-100 transition-all duration-200 hover:-translate-y-0.5 shadow-md">
+        <div class="flex items-center gap-3.5">
+          <div class="w-9 h-9 rounded-xl bg-slate-800 group-hover:bg-slate-700 flex items-center justify-center text-cyan-400 transition">
+            <i data-lucide="phone-call" class="w-5 h-5"></i>
+          </div>
+          <div class="text-left">
+            <span class="block text-sm font-semibold text-white">Llamar directo</span>
+            <span id="callBtnSub" class="block text-xs text-slate-400 font-mono"></span>
+          </div>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-white transition"></i>
+      </a>
+
+      <!-- Enviar correo -->
+      <a id="emailBtn" href="#" class="hidden group flex items-center justify-between w-full p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-slate-700 text-slate-100 transition-all duration-200 hover:-translate-y-0.5 shadow-md">
+        <div class="flex items-center gap-3.5">
+          <div class="w-9 h-9 rounded-xl bg-slate-800 group-hover:bg-slate-700 flex items-center justify-center text-cyan-400 transition">
+            <i data-lucide="mail" class="w-5 h-5"></i>
+          </div>
+          <div class="text-left">
+            <span class="block text-sm font-semibold text-white">Enviar correo</span>
+            <span id="emailBtnSub" class="block text-xs text-slate-400"></span>
+          </div>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-white transition"></i>
+      </a>
+
+      <!-- Visitar Sitio Web -->
+      <a id="websiteBtn" href="#" target="_blank" rel="noopener noreferrer" class="hidden group flex items-center justify-between w-full p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-slate-700 text-slate-100 transition-all duration-200 hover:-translate-y-0.5 shadow-md">
+        <div class="flex items-center gap-3.5">
+          <div class="w-9 h-9 rounded-xl bg-slate-800 group-hover:bg-slate-700 flex items-center justify-center text-cyan-400 transition">
+            <i data-lucide="globe" class="w-5 h-5"></i>
+          </div>
+          <div class="text-left">
+            <span class="block text-sm font-semibold text-white">Visitar Sitio Web</span>
+            <span id="websiteBtnSub" class="block text-xs text-slate-400"></span>
+          </div>
+        </div>
+        <i data-lucide="external-link" class="w-4 h-4 text-slate-500 group-hover:text-white transition"></i>
+      </a>
+
+      <!-- Instagram -->
+      <a id="instagramBtn" href="#" target="_blank" rel="noopener noreferrer" class="hidden group flex items-center justify-between w-full p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-slate-700 text-slate-100 transition-all duration-200 hover:-translate-y-0.5 shadow-md">
+        <div class="flex items-center gap-3.5">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 flex items-center justify-center text-white transition">
+            <i data-lucide="instagram" class="w-5 h-5"></i>
+          </div>
+          <div class="text-left">
+            <span class="block text-sm font-semibold text-white">Instagram</span>
+            <span id="instagramBtnSub" class="block text-xs text-slate-400"></span>
+          </div>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-white transition"></i>
+      </a>
+
+      <!-- Facebook -->
+      <a id="facebookBtn" href="#" target="_blank" rel="noopener noreferrer" class="hidden group flex items-center justify-between w-full p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-slate-700 text-slate-100 transition-all duration-200 hover:-translate-y-0.5 shadow-md">
+        <div class="flex items-center gap-3.5">
+          <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white transition">
+            <i data-lucide="facebook" class="w-5 h-5"></i>
+          </div>
+          <div class="text-left">
+            <span class="block text-sm font-semibold text-white">Facebook</span>
+            <span class="block text-xs text-slate-400">Síguenos en Facebook</span>
+          </div>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-white transition"></i>
+      </a>
+
+      <!-- LinkedIn -->
+      <a id="linkedinBtn" href="#" target="_blank" rel="noopener noreferrer" class="hidden group flex items-center justify-between w-full p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-slate-700 text-slate-100 transition-all duration-200 hover:-translate-y-0.5 shadow-md">
+        <div class="flex items-center gap-3.5">
+          <div class="w-9 h-9 rounded-xl bg-sky-700 flex items-center justify-center text-white transition">
+            <i data-lucide="linkedin" class="w-5 h-5"></i>
+          </div>
+          <div class="text-left">
+            <span class="block text-sm font-semibold text-white">LinkedIn</span>
+            <span class="block text-xs text-slate-400">Conectar en LinkedIn</span>
+          </div>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-white transition"></i>
+      </a>
+
+    </div>
+
+    <!-- 4. BOTÓN SECUNDARIO: GUARDAR CONTACTO (.VCF) -->
+    <div class="w-full pt-2">
+      <button id="saveContactBtn" onclick="handleSaveContact()"
+        class="flex items-center justify-center gap-2.5 w-full py-3.5 px-5 rounded-2xl bg-slate-900/90 hover:bg-slate-800 border-2 border-slate-700/80 hover:border-cyan-500/50 text-slate-200 hover:text-white text-sm font-semibold shadow-lg transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]">
+        <i data-lucide="user-check" class="w-5 h-5 text-cyan-400"></i>
+        <span>Guardar en Contactos (.vcf)</span>
+      </button>
+      <p class="text-[11px] text-slate-500 text-center mt-2">
+        Descarga automática compatible con iPhone (iOS) y Android
+      </p>
+    </div>
+
+  </main>
+
+  <!-- ==============================================================================
+       FOOTER MINIMALISTA
+       ============================================================================== -->
+  <footer class="w-full py-6 text-center text-xs text-slate-500">
+    <div class="max-w-md mx-auto px-4 flex flex-col items-center gap-1.5">
+      <p>Tarjeta Digital creada con <a href="/" class="text-slate-400 hover:text-cyan-400 underline underline-offset-2 transition font-medium">LinkCard Pro</a></p>
+      <p class="text-[10px] text-slate-600">&copy; 2026 Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+  <!-- Toast flotante para feedback en móvil -->
+  <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 opacity-0 pointer-events-none transform translate-y-2 transition-all duration-300 flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-2xl text-xs font-semibold bg-emerald-500 text-white">
+    <i data-lucide="check" class="w-4 h-4"></i>
+    <span id="toastMessage">Contacto guardado</span>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/js/profile.js"></script>
+</body>
+</html>
