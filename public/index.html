@@ -723,7 +723,7 @@
   </div>
 
   <!-- ==============================================================================
-       MODAL: CREAR NUEVO CLIENTE (EXCLUSIVO SUPERADMIN)
+       MODAL: CREAR NUEVO ACCESO (CLIENTE O COLABORADOR - EXCLUSIVO SUPERADMIN)
        ============================================================================== -->
   <div id="createUserModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl relative text-left">
@@ -736,21 +736,42 @@
           <i data-lucide="user-plus" class="w-5 h-5"></i>
         </div>
         <div>
-          <h3 class="text-base font-bold text-white">Nuevo Cliente</h3>
-          <p class="text-xs text-slate-400">Crea las credenciales de acceso para tu cliente.</p>
+          <h3 class="text-base font-bold text-white">Nuevo Acceso al Sistema</h3>
+          <p class="text-xs text-slate-400">Crea credenciales para un cliente o un colaborador de tu equipo.</p>
         </div>
       </div>
 
       <form id="createUserForm" onsubmit="handleCreateUserSubmit(event)" class="space-y-4 mt-4">
+        <!-- Selector de Tipo de Cuenta -->
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Nombre Completo del Cliente</label>
-          <input type="text" id="newUserName" required placeholder="Ej: Andrea Vidal"
+          <label class="block text-xs font-medium text-slate-300 mb-1.5">Tipo de Cuenta y Nivel de Acceso</label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <label class="flex items-start gap-2.5 p-2.5 rounded-xl border border-cyan-500/40 bg-cyan-950/20 cursor-pointer hover:border-cyan-500 transition">
+              <input type="radio" name="newUserRole" value="client" checked class="mt-0.5 text-cyan-500 focus:ring-cyan-500">
+              <div class="text-left">
+                <span class="block text-xs font-bold text-white">Cliente</span>
+                <span class="block text-[10px] text-slate-400 leading-tight mt-0.5">Acceso privado. Solo ve y administra sus propias tarjetas digitales.</span>
+              </div>
+            </label>
+            <label class="flex items-start gap-2.5 p-2.5 rounded-xl border border-purple-500/40 bg-purple-950/20 cursor-pointer hover:border-purple-500 transition">
+              <input type="radio" name="newUserRole" value="collaborator" class="mt-0.5 text-purple-500 focus:ring-purple-500">
+              <div class="text-left">
+                <span class="block text-xs font-bold text-purple-300">Colaborador</span>
+                <span class="block text-[10px] text-slate-400 leading-tight mt-0.5">Acceso a tus tarjetas. Puede ver, editar y ayudarte en tus tarjetas de Superadmin.</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Nombre Completo</label>
+          <input type="text" id="newUserName" required placeholder="Ej: Andrea Vidal o Carlos Asistente"
             class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500">
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Correo Electrónico (Usuario)</label>
-          <input type="email" id="newUserEmail" required placeholder="cliente@correo.com"
+          <label class="block text-xs font-medium text-slate-300 mb-1">Correo Electrónico (Usuario de Acceso)</label>
+          <input type="email" id="newUserEmail" required placeholder="usuario@correo.com"
             class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500">
         </div>
 
@@ -765,7 +786,7 @@
             Cancelar
           </button>
           <button type="submit" id="createUserSubmitBtn" class="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-cyan-600 hover:bg-cyan-500 shadow-md">
-            Guardar Cliente
+            Guardar Usuario
           </button>
         </div>
       </form>

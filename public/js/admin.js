@@ -37,13 +37,18 @@ function updateUserRoleUI(user) {
 
   if (user) {
     const isSuper = user.role === 'superadmin';
+    const isCollab = user.role === 'collaborator';
     if (roleBadge) {
-      roleBadge.textContent = isSuper
-        ? 'Superadministrador: Mauricio Lara'
-        : `Cliente: ${user.name || user.email}`;
-      roleBadge.className = isSuper
-        ? 'text-xs text-cyan-400 font-semibold hidden sm:block'
-        : 'text-xs text-slate-300 font-medium hidden sm:block';
+      if (isSuper) {
+        roleBadge.textContent = 'Superadministrador: Mauricio Lara';
+        roleBadge.className = 'text-xs text-cyan-400 font-semibold hidden sm:block';
+      } else if (isCollab) {
+        roleBadge.textContent = `Colaborador: ${user.name || user.email}`;
+        roleBadge.className = 'text-xs text-purple-400 font-semibold hidden sm:block';
+      } else {
+        roleBadge.textContent = `Cliente: ${user.name || user.email}`;
+        roleBadge.className = 'text-xs text-slate-300 font-medium hidden sm:block';
+      }
     }
     if (tabUsersBtn) {
       if (isSuper) {
@@ -811,12 +816,16 @@ async function loadUsers() {
 
     listEl.innerHTML = users.map(u => {
       const isSuper = u.role === 'superadmin';
-      const badge = isSuper
-        ? '<span class="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">Superadmin</span>'
-        : '<span class="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Cliente</span>';
+      const isCollab = u.role === 'collaborator';
+      let badge = '<span class="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Cliente</span>';
+      if (isSuper) {
+        badge = '<span class="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">Superadmin</span>';
+      } else if (isCollab) {
+        badge = '<span class="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">Colaborador</span>';
+      }
 
       const deleteBtn = isSuper ? '' : `
-        <button type="button" onclick="deleteUser('${u.id}', '${escapeHtml(u.name)}')" title="Revocar acceso y eliminar cliente"
+        <button type="button" onclick="deleteUser('${u.id}', '${escapeHtml(u.name)}')" title="Revocar acceso y eliminar usuario"
           class="p-2.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 hover:text-rose-300 border border-rose-900/40 transition flex items-center gap-1.5 text-xs">
           <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
           <span class="hidden sm:inline">Eliminar</span>
@@ -828,8 +837,8 @@ async function loadUsers() {
       return `
         <div class="p-4 sm:p-5 rounded-2xl bg-slate-950 border border-slate-800/80 hover:border-slate-700 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div class="flex items-start sm:items-center gap-3.5 min-w-0">
-            <div class="w-11 h-11 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-cyan-400 font-black text-sm shrink-0 shadow-inner">
-              ${escapeHtml((u.name || u.email || 'C')[0].toUpperCase())}
+            <div class="w-11 h-11 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center ${isCollab ? 'text-purple-400' : 'text-cyan-400'} font-black text-sm shrink-0 shadow-inner">
+              ${escapeHtml((u.name || u.email || 'U')[0].toUpperCase())}
             </div>
             <div class="min-w-0 space-y-1">
               <div class="flex items-center gap-2 flex-wrap">
@@ -838,7 +847,7 @@ async function loadUsers() {
                 <span class="text-[10px] text-slate-500">Registrado el ${dateFormatted}</span>
               </div>
               
-              <!-- Correo y Contraseña visible para recordar al cliente -->
+              <!-- Correo y Contraseña visible para recordar al usuario -->
               <div class="flex flex-wrap items-center gap-2 sm:gap-3 text-xs pt-1">
                 <!-- Correo -->
                 <div class="flex items-center gap-1 text-slate-300 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-800">
@@ -854,7 +863,7 @@ async function loadUsers() {
                   <i data-lucide="key" class="w-3 h-3 text-amber-400"></i>
                   <span class="text-slate-400 text-[11px]">Clave:</span>
                   <span class="font-mono text-[11px] text-amber-300 font-bold select-all tracking-wider">${escapeHtml(u.password || '(No disponible)')}</span>
-                  <button type="button" onclick="copyText('${escapeHtml(u.password)}', 'Contraseña copiada')" title="Copiar contraseña para el cliente" class="ml-1 p-0.5 text-slate-500 hover:text-amber-300 transition">
+                  <button type="button" onclick="copyText('${escapeHtml(u.password)}', 'Contraseña copiada')" title="Copiar contraseña" class="ml-1 p-0.5 text-slate-500 hover:text-amber-300 transition">
                     <i data-lucide="copy" class="w-3 h-3"></i>
                   </button>
                 </div>
@@ -900,6 +909,7 @@ async function handleCreateUserSubmit(e) {
   const name = document.getElementById('newUserName').value.trim();
   const email = document.getElementById('newUserEmail').value.trim();
   const password = document.getElementById('newUserPassword').value.trim();
+  const role = document.querySelector('input[name="newUserRole"]:checked')?.value || 'client';
   const submitBtn = document.getElementById('createUserSubmitBtn');
   const token = getAuthToken();
 
@@ -923,24 +933,29 @@ async function handleCreateUserSubmit(e) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`
       },
-      body: JSON.stringify({ name, email, password })
+      body: JSON.stringify({ name, email, password, role })
     });
 
     const data = await res.json();
     if (!res.ok) {
-      throw new Error(data.error || 'Error al registrar cliente');
+      throw new Error(data.error || 'Error al registrar usuario');
     }
 
-    showToast(`¡Cliente "${name}" registrado con éxito!`, 'success');
+    if (role === 'collaborator') {
+      showToast(`¡Colaborador "${name}" registrado con acceso a tus tarjetas!`, 'success');
+    } else {
+      showToast(`¡Cliente "${name}" registrado con éxito!`, 'success');
+    }
     closeCreateUserModal();
     await loadUsers();
   } catch (err) {
     showToast(err.message, 'error');
   } finally {
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Guardar Cliente';
+    submitBtn.textContent = 'Guardar Usuario';
   }
 }
+
 
 async function deleteUser(id, name) {
   if (!confirm(`¿Estás seguro de revocar el acceso a ${name}? Ya no podrá iniciar sesión ni gestionar sus tarjetas.`)) {
