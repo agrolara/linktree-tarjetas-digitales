@@ -93,6 +93,37 @@ function renderProfile(p) {
   const themeColor = p.theme_color || '#0284c7';
   document.documentElement.style.setProperty('--theme-color', themeColor);
 
+  // 1.5 Color de fondo personalizado de la aplicación
+  if (p.bg_color) {
+    document.body.style.backgroundColor = p.bg_color;
+    if (p.bg_color !== '#030712' && p.bg_color !== '#0f172a') {
+      document.body.style.backgroundImage = 'none';
+    }
+    if (isColorLight(p.bg_color)) {
+      document.body.classList.add('light-mode-card');
+    } else {
+      document.body.classList.remove('light-mode-card');
+    }
+  }
+
+  // 1.6 Foto de portada / Banner de fondo (Opcional)
+  const coverBanner = document.getElementById('coverBanner');
+  const coverImg = document.getElementById('coverImg');
+  if (p.cover_image_url) {
+    const normalizedCover = normalizeImageUrl(p.cover_image_url);
+    coverImg.src = normalizedCover;
+    coverBanner.classList.remove('hidden');
+
+    const driveCoverMatch = (p.cover_image_url || '').match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || (p.cover_image_url || '').match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (driveCoverMatch && driveCoverMatch[1]) {
+      coverImg.onerror = function() {
+        this.src = `https://drive.google.com/thumbnail?id=${driveCoverMatch[1]}&sz=w1200`;
+      };
+    }
+  } else if (coverBanner) {
+    coverBanner.classList.add('hidden');
+  }
+
   // 2. Avatar normalizado
   const avatarImg = document.getElementById('avatarImg');
   avatarImg.setAttribute('referrerpolicy', 'no-referrer');
@@ -119,6 +150,16 @@ function renderProfile(p) {
   if (p.company_name) {
     document.getElementById('companyName').textContent = p.company_name;
     document.getElementById('companyBadge').classList.remove('hidden');
+  }
+
+  // 3.5 Texto Libre / Información Adicional (opcional)
+  const freeTextSection = document.getElementById('freeTextSection');
+  const freeTextContent = document.getElementById('freeTextContent');
+  if (p.free_text && p.free_text.trim()) {
+    freeTextContent.textContent = p.free_text.trim();
+    freeTextSection.classList.remove('hidden');
+  } else if (freeTextSection) {
+    freeTextSection.classList.add('hidden');
   }
 
   // 4. Botón destacado de WhatsApp
@@ -199,10 +240,69 @@ function renderProfile(p) {
     liBtn.classList.remove('hidden');
   }
 
+  // 6. Enlaces y Botones Personalizados Adicionales
+  const customLinksList = document.getElementById('customLinksList');
+  if (customLinksList) {
+    customLinksList.innerHTML = '';
+    if (p.custom_links && Array.isArray(p.custom_links) && p.custom_links.length > 0) {
+      p.custom_links.forEach((link) => {
+        if (!link || !link.title || !link.url) return;
+        let destUrl = link.url.trim();
+        if (!destUrl.startsWith('http://') && !destUrl.startsWith('https://')) {
+          destUrl = `https://${destUrl}`;
+        }
+        const iconName = link.icon || 'external-link';
+        const linkEl = document.createElement('a');
+        linkEl.href = destUrl;
+        linkEl.target = '_blank';
+        linkEl.rel = 'noopener noreferrer';
+        linkEl.className = 'group flex items-center justify-between w-full p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-slate-700 text-slate-100 transition-all duration-200 hover:-translate-y-0.5 shadow-md';
+        linkEl.innerHTML = `
+          <div class="flex items-center gap-3.5 min-w-0">
+            <div class="w-9 h-9 rounded-xl bg-slate-800 group-hover:bg-slate-700 flex items-center justify-center shrink-0 transition" style="color: ${themeColor}">
+              <i data-lucide="${escapeHtml(iconName)}" class="w-5 h-5"></i>
+            </div>
+            <div class="text-left min-w-0">
+              <span class="block text-sm font-semibold text-white truncate">${escapeHtml(link.title)}</span>
+              <span class="block text-xs text-slate-400 font-mono truncate">${escapeHtml(formatDisplayUrl(link.url))}</span>
+            </div>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-white shrink-0 transition"></i>
+        `;
+        customLinksList.appendChild(linkEl);
+      });
+    }
+  }
+
   // Refrescar iconos de Lucide tras insertar contenido
   setTimeout(() => {
     if (window.lucide) lucide.createIcons();
   }, 50);
+}
+
+// Helper para determinar si un color hexadecimal es claro
+function isColorLight(color) {
+  if (!color || typeof color !== 'string' || !color.startsWith('#')) return false;
+  const hex = color.replace('#', '');
+  if (hex.length !== 6 && hex.length !== 3) return false;
+  const r = parseInt(hex.length === 3 ? hex[0] + hex[0] : hex.substring(0, 2), 16);
+  const g = parseInt(hex.length === 3 ? hex[1] + hex[1] : hex.substring(2, 4), 16);
+  const b = parseInt(hex.length === 3 ? hex[2] + hex[2] : hex.substring(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.55;
+}
+
+// Sanitizador seguro contra inyecciones HTML en perfiles
+function escapeHtml(text) {
+  if (!text) return '';
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  };
+  return text.toString().replace(/[&<>"']/g, (m) => map[m]);
 }
 
 // Limpiador visual de URL para mostrar dominio limpio

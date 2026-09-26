@@ -430,6 +430,10 @@ app.post('/api/profiles', requireAuth, async (req, res) => {
       linkedin,
       theme_color,
       is_active,
+      custom_links,
+      free_text,
+      cover_image_url,
+      bg_color,
     } = req.body;
 
     if (!full_name || !full_name.trim()) {
@@ -458,6 +462,10 @@ app.post('/api/profiles', requireAuth, async (req, res) => {
       linkedin: (linkedin || '').trim(),
       theme_color: theme_color || '#0284c7',
       is_active: is_active !== false,
+      custom_links: Array.isArray(custom_links) ? custom_links : [],
+      free_text: (free_text || '').trim(),
+      cover_image_url: normalizeImageUrl(cover_image_url),
+      bg_color: (bg_color || '#030712').trim(),
       created_at: now,
       updated_at: now,
       user_email: (req.user && req.user.role === 'collaborator') ? SUPERADMIN_EMAIL : (req.user ? req.user.email : null),
@@ -531,6 +539,10 @@ app.put('/api/profiles/:id', requireAuth, async (req, res) => {
       linkedin,
       theme_color,
       is_active,
+      custom_links,
+      free_text,
+      cover_image_url,
+      bg_color,
     } = req.body;
 
     const cleanSlug = sanitizeSlug(slug || full_name);
@@ -583,6 +595,10 @@ app.put('/api/profiles/:id', requireAuth, async (req, res) => {
         linkedin: linkedin?.trim(),
         theme_color: theme_color || '#0284c7',
         is_active: is_active !== undefined ? Boolean(is_active) : true,
+        custom_links: custom_links !== undefined ? (Array.isArray(custom_links) ? custom_links : []) : undefined,
+        free_text: free_text !== undefined ? free_text.trim() : undefined,
+        cover_image_url: cover_image_url !== undefined ? normalizeImageUrl(cover_image_url) : undefined,
+        bg_color: bg_color !== undefined ? bg_color.trim() : undefined,
         updated_at: new Date().toISOString(),
       };
 
@@ -637,6 +653,10 @@ app.put('/api/profiles/:id', requireAuth, async (req, res) => {
       linkedin: linkedin !== undefined ? linkedin.trim() : profiles[index].linkedin,
       theme_color: theme_color || profiles[index].theme_color || '#0284c7',
       is_active: is_active !== undefined ? Boolean(is_active) : profiles[index].is_active,
+      custom_links: custom_links !== undefined ? (Array.isArray(custom_links) ? custom_links : []) : profiles[index].custom_links,
+      free_text: free_text !== undefined ? free_text.trim() : profiles[index].free_text,
+      cover_image_url: cover_image_url !== undefined ? normalizeImageUrl(cover_image_url) : profiles[index].cover_image_url,
+      bg_color: bg_color !== undefined ? bg_color.trim() : profiles[index].bg_color,
       updated_at: new Date().toISOString(),
     };
 

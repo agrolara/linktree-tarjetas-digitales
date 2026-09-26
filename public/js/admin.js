@@ -362,8 +362,20 @@ function renderProfilesList(items) {
 }
 
 // ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 // SINCRONIZACIÓN EN VIVO CON EL SIMULADOR DE SMARTPHONE
 // ------------------------------------------------------------------------------
+function isColorLight(hex) {
+  if (!hex) return false;
+  const c = hex.replace('#', '');
+  if (c.length !== 6) return false;
+  const r = parseInt(c.substr(0, 2), 16);
+  const g = parseInt(c.substr(2, 2), 16);
+  const b = parseInt(c.substr(4, 2), 16);
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 160;
+}
+
 function setupLivePreviewListeners() {
   const fullNameEl = document.getElementById('full_name');
   if (fullNameEl) {
@@ -380,6 +392,8 @@ function setupLivePreviewListeners() {
     'bio_title',
     'company_name',
     'avatar_url',
+    'cover_image_url',
+    'free_text',
     'phone',
     'email',
     'website',
@@ -387,6 +401,7 @@ function setupLivePreviewListeners() {
     'facebook',
     'linkedin',
     'theme_color',
+    'bg_color',
   ];
 
   liveInputs.forEach((id) => {
@@ -419,14 +434,33 @@ function updateLivePreview(profileData = null) {
 
   const normalizedAvatar = normalizeImageUrl(rawAvatar);
 
+  let customLinks = [];
+  if (profileData && profileData.custom_links) {
+    if (typeof profileData.custom_links === 'string') {
+      try {
+        customLinks = JSON.parse(profileData.custom_links);
+      } catch (_) {
+        customLinks = [];
+      }
+    } else if (Array.isArray(profileData.custom_links)) {
+      customLinks = profileData.custom_links;
+    }
+  } else {
+    customLinks = getCustomLinksFromAdminForm();
+  }
+
   const data = profileData || {
     full_name: document.getElementById('full_name')?.value || 'Tu Nombre',
     bio_title: document.getElementById('bio_title')?.value || 'Cargo o Profesión',
     company_name: document.getElementById('company_name')?.value || '',
     avatar_url: normalizedAvatar,
+    cover_image_url: document.getElementById('cover_image_url')?.value || '',
+    free_text: document.getElementById('free_text')?.value || '',
+    bg_color: document.getElementById('bg_color')?.value || '#030712',
     phone: document.getElementById('phone')?.value || '',
     email: document.getElementById('email')?.value || '',
     theme_color: document.getElementById('theme_color')?.value || '#0284c7',
+    custom_links: customLinks,
   };
 
   // Avatar con referrerpolicy
@@ -434,10 +468,24 @@ function updateLivePreview(profileData = null) {
   if (avatarEl) {
     avatarEl.setAttribute('referrerpolicy', 'no-referrer');
     avatarEl.src = normalizedAvatar;
-    avatarEl.style.borderColor = data.theme_color;
+    avatarEl.style.borderColor = data.theme_color || '#0284c7';
   }
 
-  // Textos
+  // Foto de Portada / Banner de Fondo
+  const coverBanner = document.getElementById('prevCoverBanner');
+  const coverImg = document.getElementById('prevCoverImg');
+  if (coverBanner && coverImg) {
+    const rawCover = data.cover_image_url ? normalizeImageUrl(data.cover_image_url) : '';
+    if (rawCover) {
+      coverImg.src = rawCover;
+      coverBanner.classList.remove('hidden');
+    } else {
+      coverBanner.classList.add('hidden');
+      coverImg.src = '';
+    }
+  }
+
+  // Textos Principales
   const prevName = document.getElementById('prevName');
   if (prevName) prevName.textContent = data.full_name;
 
@@ -454,14 +502,57 @@ function updateLivePreview(profileData = null) {
     }
   }
 
+  // Texto Libre / Bio
+  const freeTextCont = document.getElementById('prevFreeTextContainer');
+  const freeTextEl = document.getElementById('prevFreeText');
+  if (freeTextCont && freeTextEl) {
+    if (data.free_text && data.free_text.trim()) {
+      freeTextEl.textContent = data.free_text.trim();
+      freeTextCont.classList.remove('hidden');
+    } else {
+      freeTextCont.classList.add('hidden');
+      freeTextEl.textContent = '';
+    }
+  }
+
+  // Color de Fondo de la Tarjeta y Contraste
+  const prevCont = document.getElementById('previewContainer');
+  if (prevCont) {
+    const bgColor = data.bg_color || '#030712';
+    prevCont.style.backgroundColor = bgColor;
+    if (isColorLight(bgColor)) {
+      prevCont.classList.add('light-mode-card');
+    } else {
+      prevCont.classList.remove('light-mode-card');
+    }
+  }
+
   // Color del botón de WhatsApp
   const waBtn = document.getElementById('prevWhatsappBtn');
   if (waBtn) {
-    waBtn.style.backgroundColor = data.theme_color;
+    waBtn.style.backgroundColor = data.theme_color || '#0284c7';
   }
+
+  // Enlaces Personalizados en Preview
+  const customListEl = document.getElementById('prevCustomLinksList');
+  if (customListEl) {
+    const links = Array.isArray(customLinks) ? customLinks.filter((l) => l && (l.title || l.url)) : [];
+    customListEl.innerHTML = links
+      .map(
+        (l) => `
+        <div class="flex items-center gap-3 p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60 text-slate-200">
+          <i data-lucide="${escapeHtml(l.icon || 'link')}" class="w-3.5 h-3.5 text-cyan-400"></i>
+          <span class="truncate font-medium">${escapeHtml(l.title || l.url || 'Enlace')}</span>
+        </div>
+      `
+      )
+      .join('');
+  }
+
+  refreshIcons();
 }
 
-// Paleta de colores
+// Paleta de colores de tema / acento
 function setThemeColor(hex) {
   document.getElementById('theme_color').value = hex;
   document.getElementById('themeColorPicker').value = hex;
@@ -470,6 +561,21 @@ function setThemeColor(hex) {
 
 function syncThemeColorFromPicker(hex) {
   document.getElementById('theme_color').value = hex;
+  updateLivePreview();
+}
+
+// Paleta de color de fondo
+function setBgColor(hex) {
+  const bgInput = document.getElementById('bg_color');
+  const bgPicker = document.getElementById('bgColorPicker');
+  if (bgInput) bgInput.value = hex;
+  if (bgPicker) bgPicker.value = hex;
+  updateLivePreview();
+}
+
+function syncBgColorFromPicker(hex) {
+  const bgInput = document.getElementById('bg_color');
+  if (bgInput) bgInput.value = hex;
   updateLivePreview();
 }
 
@@ -485,6 +591,121 @@ function setSampleAvatar() {
   updateLivePreview();
 }
 
+function setSampleCover() {
+  const samples = [
+    'https://images.unsplash.com/photo-1707343843437-caacff5cfa74?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=1200&q=80',
+  ];
+  const randomImg = samples[Math.floor(Math.random() * samples.length)];
+  const coverInput = document.getElementById('cover_image_url');
+  if (coverInput) coverInput.value = randomImg;
+  updateLivePreview();
+}
+
+// ------------------------------------------------------------------------------
+// GESTIÓN DINÁMICA DE ENLACES PERSONALIZADOS
+// ------------------------------------------------------------------------------
+function getCustomLinksFromAdminForm() {
+  const container = document.getElementById('customLinksListAdmin');
+  if (!container) return [];
+  const rows = container.querySelectorAll('.custom-link-row');
+  const links = [];
+  rows.forEach((row) => {
+    const title = row.querySelector('.custom-link-title')?.value?.trim() || '';
+    const url = row.querySelector('.custom-link-url')?.value?.trim() || '';
+    const icon = row.querySelector('.custom-link-icon')?.value?.trim() || 'link';
+    if (title || url) {
+      links.push({ title, url, icon });
+    }
+  });
+  return links;
+}
+
+function setCustomLinksInAdminForm(links = []) {
+  const container = document.getElementById('customLinksListAdmin');
+  if (!container) return;
+  container.innerHTML = '';
+  if (!links || !Array.isArray(links) || links.length === 0) {
+    return;
+  }
+  links.forEach((link) => addCustomLinkRow(link));
+}
+
+function addCustomLinkRow(data = {}) {
+  const container = document.getElementById('customLinksListAdmin');
+  if (!container) return;
+  const title = (data && data.title) || '';
+  const url = (data && data.url) || '';
+  const icon = (data && data.icon) || 'link';
+
+  const row = document.createElement('div');
+  row.className = 'custom-link-row p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2 transition relative';
+  row.innerHTML = `
+    <div class="flex items-center justify-between gap-2">
+      <span class="text-[11px] font-semibold text-cyan-400 flex items-center gap-1.5">
+        <i data-lucide="${escapeHtml(icon)}" class="w-3.5 h-3.5 custom-link-icon-preview"></i>
+        <span>Enlace Personalizado</span>
+      </span>
+      <button type="button" onclick="removeCustomLinkRow(this)" title="Eliminar enlace"
+        class="p-1 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition">
+        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+      </button>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+      <div class="sm:col-span-5">
+        <input type="text" value="${escapeHtml(title)}" placeholder="Título (ej: Catálogo PDF, Portafolio)"
+          class="custom-link-title w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500">
+      </div>
+      <div class="sm:col-span-5">
+        <input type="url" value="${escapeHtml(url)}" placeholder="https://..."
+          class="custom-link-url w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-cyan-300 placeholder-slate-500 focus:outline-none focus:border-cyan-500">
+      </div>
+      <div class="sm:col-span-2">
+        <select class="custom-link-icon w-full px-2 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-cyan-500">
+          <option value="link" ${icon === 'link' ? 'selected' : ''}>Enlace</option>
+          <option value="globe" ${icon === 'globe' ? 'selected' : ''}>Web</option>
+          <option value="file-text" ${icon === 'file-text' ? 'selected' : ''}>PDF/Doc</option>
+          <option value="shopping-cart" ${icon === 'shopping-cart' ? 'selected' : ''}>Tienda</option>
+          <option value="calendar" ${icon === 'calendar' ? 'selected' : ''}>Citas</option>
+          <option value="video" ${icon === 'video' ? 'selected' : ''}>Video</option>
+          <option value="music" ${icon === 'music' ? 'selected' : ''}>Audio</option>
+          <option value="map-pin" ${icon === 'map-pin' ? 'selected' : ''}>Ubicación</option>
+          <option value="star" ${icon === 'star' ? 'selected' : ''}>Destacado</option>
+        </select>
+      </div>
+    </div>
+  `;
+
+  row.querySelectorAll('input').forEach((input) => {
+    input.addEventListener('input', () => updateLivePreview());
+  });
+  const sel = row.querySelector('select');
+  if (sel) {
+    sel.addEventListener('change', (e) => {
+      const iconPrev = row.querySelector('.custom-link-icon-preview');
+      if (iconPrev) {
+        iconPrev.setAttribute('data-lucide', e.target.value);
+        refreshIcons();
+      }
+      updateLivePreview();
+    });
+  }
+
+  container.appendChild(row);
+  refreshIcons();
+  updateLivePreview();
+}
+
+function removeCustomLinkRow(btn) {
+  const row = btn.closest('.custom-link-row');
+  if (row) {
+    row.remove();
+    updateLivePreview();
+  }
+}
+
 // ------------------------------------------------------------------------------
 // ENVÍO DEL FORMULARIO (CREAR O ACTUALIZAR)
 // ------------------------------------------------------------------------------
@@ -497,12 +718,18 @@ async function handleFormSubmit(e) {
 
   const rawAvatarUrl = document.getElementById('avatar_url').value.trim();
   const normalizedAvatar = normalizeImageUrl(rawAvatarUrl);
+  const rawCoverUrl = (document.getElementById('cover_image_url')?.value || '').trim();
+  const normalizedCover = normalizeImageUrl(rawCoverUrl);
 
   const payload = {
     full_name: document.getElementById('full_name').value.trim(),
     bio_title: document.getElementById('bio_title').value.trim(),
     company_name: document.getElementById('company_name').value.trim(),
     avatar_url: normalizedAvatar,
+    cover_image_url: normalizedCover,
+    free_text: (document.getElementById('free_text')?.value || '').trim(),
+    bg_color: (document.getElementById('bg_color')?.value || '#030712').trim(),
+    custom_links: getCustomLinksFromAdminForm(),
     slug: slugify(document.getElementById('slug').value),
     phone: document.getElementById('phone').value.trim(),
     whatsapp_message: document.getElementById('whatsapp_message').value.trim(),
@@ -576,6 +803,10 @@ function editProfile(id) {
   document.getElementById('bio_title').value = profile.bio_title || '';
   document.getElementById('company_name').value = profile.company_name || '';
   document.getElementById('avatar_url').value = profile.avatar_url || '';
+  document.getElementById('cover_image_url').value = profile.cover_image_url || '';
+  document.getElementById('free_text').value = profile.free_text || '';
+  document.getElementById('bg_color').value = profile.bg_color || '#030712';
+  document.getElementById('bgColorPicker').value = profile.bg_color || '#030712';
   document.getElementById('slug').value = profile.slug || '';
   document.getElementById('phone').value = profile.phone || '';
   document.getElementById('whatsapp_message').value = profile.whatsapp_message || '';
@@ -587,6 +818,16 @@ function editProfile(id) {
   document.getElementById('theme_color').value = profile.theme_color || '#0284c7';
   document.getElementById('themeColorPicker').value = profile.theme_color || '#0284c7';
   document.getElementById('is_active').checked = profile.is_active !== false;
+
+  let profileLinks = profile.custom_links;
+  if (typeof profileLinks === 'string') {
+    try {
+      profileLinks = JSON.parse(profileLinks);
+    } catch (_) {
+      profileLinks = [];
+    }
+  }
+  setCustomLinksInAdminForm(profileLinks || []);
 
   // Cambiar textos del formulario
   document.getElementById('formTitle').innerHTML = `
@@ -610,6 +851,9 @@ function editProfile(id) {
 function resetFormToCreate() {
   document.getElementById('profileForm').reset();
   document.getElementById('profileId').value = '';
+  document.getElementById('cover_image_url').value = '';
+  document.getElementById('free_text').value = '';
+  setCustomLinksInAdminForm([]);
   document.getElementById('formTitle').innerHTML = `
     <i data-lucide="user-plus" class="w-5 h-5 text-cyan-400"></i>
     <span>Crear Nuevo Perfil</span>
@@ -623,6 +867,7 @@ function resetFormToCreate() {
   document.getElementById('autoSlugToggle').className = 'px-3 py-2 text-xs text-cyan-400 hover:text-cyan-300 font-medium';
 
   setThemeColor('#0284c7');
+  setBgColor('#030712');
   updateLivePreview();
   refreshIcons();
 }

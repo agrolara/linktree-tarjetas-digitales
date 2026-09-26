@@ -59,8 +59,14 @@
        ============================================================================== -->
   <main id="profileContent" class="hidden flex-1 w-full max-w-md mx-auto px-5 py-10 flex flex-col items-center justify-center">
 
+    <!-- 0. FOTO DE PORTADA / BANNER DE FONDO (OPCIONAL) -->
+    <div id="coverBanner" class="hidden w-full h-40 sm:h-48 rounded-3xl overflow-hidden mb-[-64px] relative shadow-xl z-0">
+      <img id="coverImg" src="" alt="Portada" referrerpolicy="no-referrer" class="w-full h-full object-cover">
+      <div class="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-slate-950/80"></div>
+    </div>
+
     <!-- 1. HEADER DEL PERFIL: AVATAR & INFORMACIÓN -->
-    <header class="text-center w-full flex flex-col items-center mb-8">
+    <header class="text-center w-full flex flex-col items-center mb-8 relative z-10">
       
       <!-- Avatar con borde temático y brillo sutil -->
       <div class="relative mb-4 group">
@@ -84,6 +90,11 @@
           <i data-lucide="briefcase" class="w-3.5 h-3.5 text-cyan-400"></i>
           <span id="companyName">Empresa</span>
         </span>
+      </div>
+
+      <!-- Texto Libre / Información Adicional (opcional) -->
+      <div id="freeTextSection" class="hidden mt-4 w-full p-4 rounded-2xl bg-slate-900/80 border border-slate-800 text-slate-300 text-xs sm:text-sm leading-relaxed text-center whitespace-pre-line shadow-sm">
+        <p id="freeTextContent"></p>
       </div>
 
     </header>
@@ -187,6 +198,9 @@
         </div>
         <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-white transition"></i>
       </a>
+
+      <!-- Enlaces y Botones Personalizados Dinámicos -->
+      <div id="customLinksList" class="space-y-3"></div>
 
     </div>
 

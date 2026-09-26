@@ -361,14 +361,46 @@
                     </div>
                     <p class="text-[11px] text-slate-500 mt-1">Soporta imágenes directas (.jpg/.png) y enlaces compartidos de <strong class="text-slate-400">Google Drive</strong> (se convierten automáticamente).</p>
                   </div>
+
+                  <!-- Foto de Portada / Banner de Fondo (Opcional) -->
+                  <div class="sm:col-span-2">
+                    <label class="block text-xs font-medium text-slate-300 mb-1.5 flex items-center justify-between">
+                      <span>Foto de Portada / Banner de Fondo (Opcional)</span>
+                      <span class="text-[10px] text-slate-500 font-normal">Recomendado: 1200x500</span>
+                    </label>
+                    <div class="flex gap-2">
+                      <input type="url" id="cover_image_url" placeholder="https://ejemplo.com/banner.jpg o enlace de Google Drive"
+                        class="flex-1 px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
+                      <button type="button" onclick="setSampleCover()" title="Usar portada de muestra"
+                        class="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium transition flex items-center gap-1.5">
+                        <i data-lucide="image" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">Muestra</span>
+                      </button>
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-1">Aparecerá en la cabecera de la tarjeta detrás de tu foto de perfil.</p>
+                  </div>
                 </div>
               </div>
 
-              <!-- 2. SLUG Y CONFIGURACIÓN PÚBLICA -->
+              <!-- 2. TEXTO LIBRE / BIOGRAFÍA O SERVICIOS -->
+              <div class="pt-4 border-t border-slate-800/80">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-3 flex items-center gap-2">
+                  <i data-lucide="file-text" class="w-4 h-4"></i>
+                  2. Texto Libre / Descripción del Perfil (Opcional)
+                </h3>
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1.5">Acerca de ti, servicios, horarios o información comercial</label>
+                  <textarea id="free_text" rows="3" placeholder="Escribe aquí un resumen sobre tu negocio, horarios de atención, servicios que ofreces, dirección física o cualquier mensaje para tus clientes..."
+                    class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition resize-y"></textarea>
+                  <p class="text-[11px] text-slate-500 mt-1">Este texto se mostrará en un bloque elegante en tu tarjeta digital con saltos de línea automáticos.</p>
+                </div>
+              </div>
+
+              <!-- 3. SLUG Y CONFIGURACIÓN PÚBLICA -->
               <div class="pt-4 border-t border-slate-800/80">
                 <h3 class="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-4 flex items-center gap-2">
                   <i data-lucide="link-2" class="w-4 h-4"></i>
-                  2. Enlace Público Único (Slug)
+                  3. Enlace Público Único (Slug)
                 </h3>
                 <div class="space-y-4">
                   <div>
@@ -402,11 +434,11 @@
                 </div>
               </div>
 
-              <!-- 3. CANALES DE CONTACTO DIRECTO -->
+              <!-- 4. CANALES DE CONTACTO DIRECTO -->
               <div class="pt-4 border-t border-slate-800/80">
                 <h3 class="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-4 flex items-center gap-2">
                   <i data-lucide="message-circle" class="w-4 h-4"></i>
-                  3. Canales de Contacto Directo
+                  4. Canales de Contacto Directo
                 </h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -450,11 +482,11 @@
                 </div>
               </div>
 
-              <!-- 4. REDES SOCIALES -->
+              <!-- 5. REDES SOCIALES -->
               <div class="pt-4 border-t border-slate-800/80">
                 <h3 class="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-4 flex items-center gap-2">
                   <i data-lucide="share-2" class="w-4 h-4"></i>
-                  4. Redes Sociales
+                  5. Redes Sociales
                 </h3>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
@@ -480,25 +512,69 @@
                 </div>
               </div>
 
-              <!-- 5. COLOR DEL TEMA -->
+              <!-- 6. ENLACES Y BOTONES PERSONALIZADOS ADICIONALES (URLS ILIMITADAS) -->
               <div class="pt-4 border-t border-slate-800/80">
-                <h3 class="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-4 flex items-center gap-2">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-xs font-semibold uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+                    <i data-lucide="link" class="w-4 h-4"></i>
+                    6. Enlaces y Botones Adicionales (URLs)
+                  </h3>
+                  <button type="button" onclick="addCustomLinkRow()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/70 hover:bg-cyan-900 border border-cyan-800/60 text-cyan-400 hover:text-cyan-300 text-xs font-semibold transition hover:scale-105 active:scale-95 shadow-sm">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    <span>+ Agregar Enlace</span>
+                  </button>
+                </div>
+                <p class="text-[11px] text-slate-400 mb-3">Agrega botones adicionales con enlaces ilimitados: Catálogos PDF, Tienda Online, Portafolio, Agendar Citas, YouTube, TikTok, etc.</p>
+                
+                <div id="customLinksListAdmin" class="space-y-3">
+                  <!-- Se llena dinámicamente con addCustomLinkRow() -->
+                </div>
+              </div>
+
+              <!-- 7. COLOR DEL TEMA Y FONDO DE LA TARJETA -->
+              <div class="pt-4 border-t border-slate-800/80 space-y-4">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-cyan-400 flex items-center gap-2">
                   <i data-lucide="palette" class="w-4 h-4"></i>
-                  5. Color del Tema
+                  7. Apariencia y Colores de la Tarjeta
                 </h3>
-                <div class="flex flex-wrap items-center gap-3">
-                  <button type="button" onclick="setThemeColor('#0284c7')" class="w-8 h-8 rounded-full bg-[#0284c7] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Azul Océano"></button>
-                  <button type="button" onclick="setThemeColor('#059669')" class="w-8 h-8 rounded-full bg-[#059669] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Verde Esmeralda"></button>
-                  <button type="button" onclick="setThemeColor('#7c3aed')" class="w-8 h-8 rounded-full bg-[#7c3aed] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Violeta"></button>
-                  <button type="button" onclick="setThemeColor('#db2777')" class="w-8 h-8 rounded-full bg-[#db2777] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Rosa Vibrante"></button>
-                  <button type="button" onclick="setThemeColor('#78350f')" class="w-8 h-8 rounded-full bg-[#78350f] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Café Gourmet"></button>
-                  <button type="button" onclick="setThemeColor('#0f172a')" class="w-8 h-8 rounded-full bg-[#0f172a] border border-slate-700 ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Negro Slate"></button>
-                  
-                  <div class="flex items-center gap-2 ml-auto">
-                    <span class="text-xs text-slate-400 font-mono">Hex:</span>
-                    <div class="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-xl">
-                      <input type="color" id="themeColorPicker" value="#0284c7" onchange="syncThemeColorFromPicker(this.value)" class="w-5 h-5 rounded cursor-pointer bg-transparent border-0">
-                      <input type="text" id="theme_color" value="#0284c7" maxlength="7" class="w-16 bg-transparent text-xs text-white font-mono uppercase focus:outline-none">
+
+                <!-- Color de Acento / Tema -->
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-2">Color de Acento (Botón WhatsApp, Iconos y Bordes)</label>
+                  <div class="flex flex-wrap items-center gap-2.5">
+                    <button type="button" onclick="setThemeColor('#0284c7')" class="w-8 h-8 rounded-full bg-[#0284c7] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Azul Océano"></button>
+                    <button type="button" onclick="setThemeColor('#059669')" class="w-8 h-8 rounded-full bg-[#059669] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Verde Esmeralda"></button>
+                    <button type="button" onclick="setThemeColor('#7c3aed')" class="w-8 h-8 rounded-full bg-[#7c3aed] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Violeta"></button>
+                    <button type="button" onclick="setThemeColor('#db2777')" class="w-8 h-8 rounded-full bg-[#db2777] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Rosa Vibrante"></button>
+                    <button type="button" onclick="setThemeColor('#f59e0b')" class="w-8 h-8 rounded-full bg-[#f59e0b] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Dorado / Ámbar"></button>
+                    <button type="button" onclick="setThemeColor('#78350f')" class="w-8 h-8 rounded-full bg-[#78350f] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Café Gourmet"></button>
+                    
+                    <div class="flex items-center gap-2 ml-auto">
+                      <span class="text-xs text-slate-400 font-mono">Hex:</span>
+                      <div class="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-xl">
+                        <input type="color" id="themeColorPicker" value="#0284c7" onchange="syncThemeColorFromPicker(this.value)" class="w-5 h-5 rounded cursor-pointer bg-transparent border-0">
+                        <input type="text" id="theme_color" value="#0284c7" maxlength="7" class="w-16 bg-transparent text-xs text-white font-mono uppercase focus:outline-none">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Color de Fondo de la Tarjeta Digital -->
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-2">Color de Fondo de la Tarjeta Digital</label>
+                  <div class="flex flex-wrap items-center gap-2.5">
+                    <button type="button" onclick="setBgColor('#030712')" class="px-2.5 py-1.5 rounded-lg bg-[#030712] border border-slate-700 text-[11px] text-slate-300 hover:border-cyan-500 transition">🌑 Oscuro</button>
+                    <button type="button" onclick="setBgColor('#0f172a')" class="px-2.5 py-1.5 rounded-lg bg-[#0f172a] border border-slate-700 text-[11px] text-slate-300 hover:border-cyan-500 transition">🌌 Noche</button>
+                    <button type="button" onclick="setBgColor('#18181b')" class="px-2.5 py-1.5 rounded-lg bg-[#18181b] border border-slate-700 text-[11px] text-slate-300 hover:border-cyan-500 transition">🪐 Grafito</button>
+                    <button type="button" onclick="setBgColor('#1c1917')" class="px-2.5 py-1.5 rounded-lg bg-[#1c1917] border border-slate-700 text-[11px] text-slate-300 hover:border-cyan-500 transition">🍫 Tierra</button>
+                    <button type="button" onclick="setBgColor('#ffffff')" class="px-2.5 py-1.5 rounded-lg bg-[#ffffff] border border-slate-300 text-[11px] text-slate-900 font-bold hover:border-cyan-500 transition">☀️ Blanco</button>
+                    
+                    <div class="flex items-center gap-2 ml-auto">
+                      <span class="text-xs text-slate-400 font-mono">Hex:</span>
+                      <div class="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-xl">
+                        <input type="color" id="bgColorPicker" value="#030712" onchange="syncBgColorFromPicker(this.value)" class="w-5 h-5 rounded cursor-pointer bg-transparent border-0">
+                        <input type="text" id="bg_color" value="#030712" maxlength="7" class="w-16 bg-transparent text-xs text-white font-mono uppercase focus:outline-none">
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -540,11 +616,17 @@
               </div>
 
               <!-- Pantalla del Smartphone -->
-              <div class="smartphone-screen text-left p-4 flex flex-col justify-between" id="previewContainer">
+              <div class="smartphone-screen text-left p-4 flex flex-col justify-between transition-colors duration-300" id="previewContainer">
                 <div>
+                  <!-- Portada / Banner de Fondo en Preview (Opcional) -->
+                  <div id="prevCoverBanner" class="hidden -mx-4 -mt-4 h-24 overflow-hidden mb-[-36px] relative shadow-md">
+                    <img id="prevCoverImg" src="" alt="Portada" referrerpolicy="no-referrer" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/60"></div>
+                  </div>
+
                   <!-- Avatar & Perfil -->
-                  <div class="flex flex-col items-center text-center mt-2 mb-4">
-                    <div class="relative mb-3">
+                  <div class="flex flex-col items-center text-center mt-2 mb-3 relative z-10">
+                    <div class="relative mb-2.5">
                       <img id="prevAvatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&h=400&q=80"
                         alt="Avatar" referrerpolicy="no-referrer" class="w-20 h-20 rounded-full object-cover shadow-md border-2 border-cyan-500 transition-all">
                     </div>
@@ -553,6 +635,11 @@
                     <span id="prevCompany" class="text-[10px] text-cyan-400 bg-cyan-950/60 border border-cyan-800/50 px-2 py-0.5 rounded-full mt-1.5 inline-block">
                       DevCraft Studio
                     </span>
+
+                    <!-- Texto Libre en Preview -->
+                    <div id="prevFreeTextContainer" class="hidden mt-3 w-full p-2.5 rounded-xl bg-slate-800/70 border border-slate-700/60 text-[11px] text-slate-300 text-center whitespace-pre-line leading-relaxed shadow-sm">
+                      <p id="prevFreeText"></p>
+                    </div>
                   </div>
 
                   <!-- Botón Principal: WhatsApp -->
@@ -581,6 +668,8 @@
                       <i data-lucide="instagram" class="w-3.5 h-3.5 text-pink-400"></i>
                       <span>Instagram</span>
                     </div>
+                    <!-- Enlaces adicionales en Preview -->
+                    <div id="prevCustomLinksList" class="space-y-2"></div>
                   </div>
 
                   <!-- Botón Guardar Contacto (vCard) -->

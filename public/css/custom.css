@@ -80,3 +80,62 @@ body {
 #toast {
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
+
+/* Modo claro para tarjetas con fondo claro */
+body.light-mode-card {
+  color: #1e293b !important;
+  background-image: none !important;
+}
+
+body.light-mode-card #fullName {
+  color: #0f172a !important;
+}
+
+body.light-mode-card #bioTitle {
+  color: #475569 !important;
+}
+
+body.light-mode-card #companyBadge span {
+  background-color: rgba(241, 245, 249, 0.95) !important;
+  color: #334155 !important;
+  border-color: #cbd5e1 !important;
+}
+
+body.light-mode-card #freeTextSection {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  color: #334155 !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+body.light-mode-card #linksContainer a {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+body.light-mode-card #linksContainer a .w-9 {
+  background-color: #f1f5f9 !important;
+}
+
+body.light-mode-card #linksContainer a span.text-white {
+  color: #0f172a !important;
+}
+
+body.light-mode-card #linksContainer a span.text-slate-400 {
+  color: #64748b !important;
+}
+
+body.light-mode-card #saveContactBtn {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+body.light-mode-card footer p,
+body.light-mode-card footer a {
+  color: #64748b !important;
+}
+
