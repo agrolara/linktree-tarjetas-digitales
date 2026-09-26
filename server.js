@@ -434,6 +434,7 @@ app.post('/api/profiles', requireAuth, async (req, res) => {
       free_text,
       cover_image_url,
       bg_color,
+      button_color,
     } = req.body;
 
     if (!full_name || !full_name.trim()) {
@@ -466,6 +467,7 @@ app.post('/api/profiles', requireAuth, async (req, res) => {
       free_text: (free_text || '').trim(),
       cover_image_url: normalizeImageUrl(cover_image_url),
       bg_color: (bg_color || '#030712').trim(),
+      button_color: (button_color || '').trim(),
       created_at: now,
       updated_at: now,
       user_email: (req.user && req.user.role === 'collaborator') ? SUPERADMIN_EMAIL : (req.user ? req.user.email : null),
@@ -543,6 +545,7 @@ app.put('/api/profiles/:id', requireAuth, async (req, res) => {
       free_text,
       cover_image_url,
       bg_color,
+      button_color,
     } = req.body;
 
     const cleanSlug = sanitizeSlug(slug || full_name);
@@ -599,6 +602,7 @@ app.put('/api/profiles/:id', requireAuth, async (req, res) => {
         free_text: free_text !== undefined ? free_text.trim() : undefined,
         cover_image_url: cover_image_url !== undefined ? normalizeImageUrl(cover_image_url) : undefined,
         bg_color: bg_color !== undefined ? bg_color.trim() : undefined,
+        button_color: button_color !== undefined ? button_color.trim() : undefined,
         updated_at: new Date().toISOString(),
       };
 
@@ -657,6 +661,7 @@ app.put('/api/profiles/:id', requireAuth, async (req, res) => {
       free_text: free_text !== undefined ? free_text.trim() : profiles[index].free_text,
       cover_image_url: cover_image_url !== undefined ? normalizeImageUrl(cover_image_url) : profiles[index].cover_image_url,
       bg_color: bg_color !== undefined ? bg_color.trim() : profiles[index].bg_color,
+      button_color: button_color !== undefined ? button_color.trim() : profiles[index].button_color,
       updated_at: new Date().toISOString(),
     };
 

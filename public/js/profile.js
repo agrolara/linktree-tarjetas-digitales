@@ -162,7 +162,7 @@ function renderProfile(p) {
     freeTextSection.classList.add('hidden');
   }
 
-  // 4. Botón destacado de WhatsApp
+  // 4. Botón destacado de WhatsApp (Color Verde Oficial #25D366)
   if (p.phone) {
     const cleanPhone = p.phone.replace(/\D/g, '');
     let waUrl = `https://wa.me/${cleanPhone}`;
@@ -170,10 +170,12 @@ function renderProfile(p) {
       waUrl += `?text=${encodeURIComponent(p.whatsapp_message)}`;
     }
     const waBtn = document.getElementById('whatsappBtn');
-    waBtn.href = waUrl;
-    waBtn.style.backgroundColor = themeColor;
+    if (waBtn) {
+      waBtn.href = waUrl;
+      waBtn.style.backgroundColor = '#25D366';
+    }
   } else {
-    document.getElementById('whatsappSection').classList.add('hidden');
+    document.getElementById('whatsappSection')?.classList.add('hidden');
   }
 
   // 5. Botonera vertical de contacto
@@ -272,6 +274,31 @@ function renderProfile(p) {
         customLinksList.appendChild(linkEl);
       });
     }
+  }
+
+  // 7. Color de Botones Personalizado (para todos los botones excepto WhatsApp)
+  const buttonColor = (p.button_color || '').trim();
+  if (buttonColor) {
+    document.documentElement.style.setProperty('--button-bg-color', buttonColor);
+    const isBtnLight = isColorLight(buttonColor);
+    document.documentElement.style.setProperty(
+      '--button-border-color',
+      isBtnLight ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.12)'
+    );
+
+    const targetButtons = document.querySelectorAll(
+      '#callBtn, #emailBtn, #websiteBtn, #instagramBtn, #facebookBtn, #linkedinBtn, #customLinksList a, #saveContactBtn'
+    );
+    targetButtons.forEach((btn) => {
+      btn.classList.add('custom-btn-color');
+      if (isBtnLight) {
+        btn.classList.add('btn-is-light');
+        btn.classList.remove('btn-is-dark');
+      } else {
+        btn.classList.add('btn-is-dark');
+        btn.classList.remove('btn-is-light');
+      }
+    });
   }
 
   // Refrescar iconos de Lucide tras insertar contenido

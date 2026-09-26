@@ -402,6 +402,7 @@ function setupLivePreviewListeners() {
     'linkedin',
     'theme_color',
     'bg_color',
+    'button_color',
   ];
 
   liveInputs.forEach((id) => {
@@ -457,6 +458,7 @@ function updateLivePreview(profileData = null) {
     cover_image_url: document.getElementById('cover_image_url')?.value || '',
     free_text: document.getElementById('free_text')?.value || '',
     bg_color: document.getElementById('bg_color')?.value || '#030712',
+    button_color: document.getElementById('button_color')?.value || '',
     phone: document.getElementById('phone')?.value || '',
     email: document.getElementById('email')?.value || '',
     theme_color: document.getElementById('theme_color')?.value || '#0284c7',
@@ -527,10 +529,10 @@ function updateLivePreview(profileData = null) {
     }
   }
 
-  // Color del botón de WhatsApp
+  // Color del botón de WhatsApp (Siempre verde oficial referencial de WhatsApp)
   const waBtn = document.getElementById('prevWhatsappBtn');
   if (waBtn) {
-    waBtn.style.backgroundColor = data.theme_color || '#0284c7';
+    waBtn.style.backgroundColor = '#25D366';
   }
 
   // Enlaces Personalizados en Preview
@@ -549,6 +551,37 @@ function updateLivePreview(profileData = null) {
       .join('');
   }
 
+  // Color de los otros botones en el Simulador (Llamar, Correo, Web, Redes, Enlaces y VCard)
+  const btnColor = (data.button_color || '').trim();
+  const isBtnLight = btnColor ? isColorLight(btnColor) : false;
+  const previewButtons = document.querySelectorAll(
+    '#prevButtonsList > div:not(#prevCustomLinksList), #prevCustomLinksList > div, #prevVcardBtn'
+  );
+  previewButtons.forEach((btn) => {
+    if (btnColor) {
+      btn.style.backgroundColor = btnColor;
+      btn.style.borderColor = isBtnLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.12)';
+      if (isBtnLight) {
+        btn.classList.add('text-slate-900');
+        btn.classList.remove('text-slate-200');
+        const textSpan = btn.querySelector('span');
+        if (textSpan) textSpan.style.color = '#0f172a';
+      } else {
+        btn.classList.add('text-slate-200');
+        btn.classList.remove('text-slate-900');
+        const textSpan = btn.querySelector('span');
+        if (textSpan) textSpan.style.color = '';
+      }
+    } else {
+      btn.style.backgroundColor = '';
+      btn.style.borderColor = '';
+      btn.classList.add('text-slate-200');
+      btn.classList.remove('text-slate-900');
+      const textSpan = btn.querySelector('span');
+      if (textSpan) textSpan.style.color = '';
+    }
+  });
+
   refreshIcons();
 }
 
@@ -561,6 +594,21 @@ function setThemeColor(hex) {
 
 function syncThemeColorFromPicker(hex) {
   document.getElementById('theme_color').value = hex;
+  updateLivePreview();
+}
+
+// Paleta de color de botones (excepto WhatsApp)
+function setButtonColor(hex) {
+  const btnInput = document.getElementById('button_color');
+  const btnPicker = document.getElementById('buttonColorPicker');
+  if (btnInput) btnInput.value = hex;
+  if (btnPicker && hex) btnPicker.value = hex;
+  updateLivePreview();
+}
+
+function syncButtonColorFromPicker(hex) {
+  const btnInput = document.getElementById('button_color');
+  if (btnInput) btnInput.value = hex;
   updateLivePreview();
 }
 
@@ -729,6 +777,7 @@ async function handleFormSubmit(e) {
     cover_image_url: normalizedCover,
     free_text: (document.getElementById('free_text')?.value || '').trim(),
     bg_color: (document.getElementById('bg_color')?.value || '#030712').trim(),
+    button_color: (document.getElementById('button_color')?.value || '').trim(),
     custom_links: getCustomLinksFromAdminForm(),
     slug: slugify(document.getElementById('slug').value),
     phone: document.getElementById('phone').value.trim(),
@@ -807,6 +856,8 @@ function editProfile(id) {
   document.getElementById('free_text').value = profile.free_text || '';
   document.getElementById('bg_color').value = profile.bg_color || '#030712';
   document.getElementById('bgColorPicker').value = profile.bg_color || '#030712';
+  document.getElementById('button_color').value = profile.button_color || '';
+  document.getElementById('buttonColorPicker').value = profile.button_color || '#1e293b';
   document.getElementById('slug').value = profile.slug || '';
   document.getElementById('phone').value = profile.phone || '';
   document.getElementById('whatsapp_message').value = profile.whatsapp_message || '';
@@ -853,6 +904,7 @@ function resetFormToCreate() {
   document.getElementById('profileId').value = '';
   document.getElementById('cover_image_url').value = '';
   document.getElementById('free_text').value = '';
+  setButtonColor('');
   setCustomLinksInAdminForm([]);
   document.getElementById('formTitle').innerHTML = `
     <i data-lucide="user-plus" class="w-5 h-5 text-cyan-400"></i>

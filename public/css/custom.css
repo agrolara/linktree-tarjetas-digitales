@@ -139,3 +139,60 @@ body.light-mode-card footer a {
   color: #64748b !important;
 }
 
+/* Color de Botones Personalizado (Excluyendo WhatsApp) */
+.custom-btn-color {
+  background-color: var(--button-bg-color) !important;
+  border-color: var(--button-border-color) !important;
+}
+
+.custom-btn-color.btn-is-light {
+  color: #0f172a !important;
+}
+
+.custom-btn-color.btn-is-light span.text-white,
+.custom-btn-color.btn-is-light span.font-semibold {
+  color: #0f172a !important;
+}
+
+.custom-btn-color.btn-is-light span.text-slate-400,
+.custom-btn-color.btn-is-light span.text-slate-300,
+.custom-btn-color.btn-is-light span.font-mono {
+  color: #475569 !important;
+}
+
+.custom-btn-color.btn-is-light .w-9 {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+.custom-btn-color.btn-is-light i {
+  color: #334155 !important;
+}
+
+.custom-btn-color.btn-is-light i[data-lucide="chevron-right"],
+.custom-btn-color.btn-is-light i[data-lucide="external-link"] {
+  color: #64748b !important;
+}
+
+.custom-btn-color.btn-is-dark {
+  color: #ffffff !important;
+}
+
+.custom-btn-color.btn-is-dark span.text-white,
+.custom-btn-color.btn-is-dark span.font-semibold {
+  color: #ffffff !important;
+}
+
+.custom-btn-color.btn-is-dark span.text-slate-400,
+.custom-btn-color.btn-is-dark span.font-mono {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.custom-btn-color.btn-is-dark .w-9 {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.custom-btn-color.btn-is-dark i[data-lucide="chevron-right"],
+.custom-btn-color.btn-is-dark i[data-lucide="external-link"] {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+

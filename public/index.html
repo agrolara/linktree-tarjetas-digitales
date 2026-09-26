@@ -538,25 +538,33 @@
                   7. Apariencia y Colores de la Tarjeta
                 </h3>
 
-                <!-- Color de Acento / Tema -->
+                <!-- Color de los Botones (Llamar, Correo, Web, Redes, Enlaces) -->
                 <div>
-                  <label class="block text-xs font-medium text-slate-300 mb-2">Color de Acento (Botón WhatsApp, Iconos y Bordes)</label>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <label class="block text-xs font-medium text-slate-300">Color de los Botones (Contacto y Enlaces)</label>
+                    <span class="text-[10px] text-emerald-400 flex items-center gap-1">
+                      <span class="w-1.5 h-1.5 rounded-full bg-[#25D366]"></span>
+                      WhatsApp permanece verde oficial
+                    </span>
+                  </div>
                   <div class="flex flex-wrap items-center gap-2.5">
-                    <button type="button" onclick="setThemeColor('#0284c7')" class="w-8 h-8 rounded-full bg-[#0284c7] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Azul Océano"></button>
-                    <button type="button" onclick="setThemeColor('#059669')" class="w-8 h-8 rounded-full bg-[#059669] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Verde Esmeralda"></button>
-                    <button type="button" onclick="setThemeColor('#7c3aed')" class="w-8 h-8 rounded-full bg-[#7c3aed] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Violeta"></button>
-                    <button type="button" onclick="setThemeColor('#db2777')" class="w-8 h-8 rounded-full bg-[#db2777] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Rosa Vibrante"></button>
-                    <button type="button" onclick="setThemeColor('#f59e0b')" class="w-8 h-8 rounded-full bg-[#f59e0b] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Dorado / Ámbar"></button>
-                    <button type="button" onclick="setThemeColor('#78350f')" class="w-8 h-8 rounded-full bg-[#78350f] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Café Gourmet"></button>
-                    
+                    <button type="button" onclick="setButtonColor('#1e293b')" class="px-2.5 py-1.5 rounded-lg bg-[#1e293b] border border-slate-700 text-[11px] text-slate-300 hover:border-cyan-500 transition" title="Carbón clásico">🌑 Clásico</button>
+                    <button type="button" onclick="setButtonColor('#0284c7')" class="px-2.5 py-1.5 rounded-lg bg-[#0284c7] border border-slate-700 text-[11px] text-white hover:border-cyan-300 transition" title="Azul Océano">💎 Azul</button>
+                    <button type="button" onclick="setButtonColor('#7c3aed')" class="px-2.5 py-1.5 rounded-lg bg-[#7c3aed] border border-slate-700 text-[11px] text-white hover:border-cyan-300 transition" title="Violeta">🔮 Violeta</button>
+                    <button type="button" onclick="setButtonColor('#db2777')" class="px-2.5 py-1.5 rounded-lg bg-[#db2777] border border-slate-700 text-[11px] text-white hover:border-cyan-300 transition" title="Rosa Vibrante">🌸 Rosa</button>
+                    <button type="button" onclick="setButtonColor('#065f46')" class="px-2.5 py-1.5 rounded-lg bg-[#065f46] border border-slate-700 text-[11px] text-white hover:border-cyan-300 transition" title="Verde Bosque">🌲 Bosque</button>
+                    <button type="button" onclick="setButtonColor('#78350f')" class="px-2.5 py-1.5 rounded-lg bg-[#78350f] border border-slate-700 text-[11px] text-white hover:border-cyan-300 transition" title="Café Gourmet">🍫 Gourmet</button>
+                    <button type="button" onclick="setButtonColor('#ffffff')" class="px-2.5 py-1.5 rounded-lg bg-[#ffffff] border border-slate-300 text-[11px] text-slate-900 font-bold hover:border-cyan-500 transition" title="Blanco Nieve">☀️ Blanco</button>
+
                     <div class="flex items-center gap-2 ml-auto">
                       <span class="text-xs text-slate-400 font-mono">Hex:</span>
                       <div class="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-xl">
-                        <input type="color" id="themeColorPicker" value="#0284c7" onchange="syncThemeColorFromPicker(this.value)" class="w-5 h-5 rounded cursor-pointer bg-transparent border-0">
-                        <input type="text" id="theme_color" value="#0284c7" maxlength="7" class="w-16 bg-transparent text-xs text-white font-mono uppercase focus:outline-none">
+                        <input type="color" id="buttonColorPicker" value="#1e293b" onchange="syncButtonColorFromPicker(this.value)" class="w-5 h-5 rounded cursor-pointer bg-transparent border-0">
+                        <input type="text" id="button_color" value="" placeholder="#1E293B" maxlength="7" class="w-16 bg-transparent text-xs text-white font-mono uppercase focus:outline-none">
                       </div>
                     </div>
                   </div>
+                  <p class="text-[11px] text-slate-500 mt-1">Aplica un color personalizado para todos tus botones de enlaces y contacto. El texto se adapta automáticamente a modo oscuro si seleccionas un color claro.</p>
                 </div>
 
                 <!-- Color de Fondo de la Tarjeta Digital -->
@@ -568,12 +576,33 @@
                     <button type="button" onclick="setBgColor('#18181b')" class="px-2.5 py-1.5 rounded-lg bg-[#18181b] border border-slate-700 text-[11px] text-slate-300 hover:border-cyan-500 transition">🪐 Grafito</button>
                     <button type="button" onclick="setBgColor('#1c1917')" class="px-2.5 py-1.5 rounded-lg bg-[#1c1917] border border-slate-700 text-[11px] text-slate-300 hover:border-cyan-500 transition">🍫 Tierra</button>
                     <button type="button" onclick="setBgColor('#ffffff')" class="px-2.5 py-1.5 rounded-lg bg-[#ffffff] border border-slate-300 text-[11px] text-slate-900 font-bold hover:border-cyan-500 transition">☀️ Blanco</button>
-                    
+
                     <div class="flex items-center gap-2 ml-auto">
                       <span class="text-xs text-slate-400 font-mono">Hex:</span>
                       <div class="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-xl">
                         <input type="color" id="bgColorPicker" value="#030712" onchange="syncBgColorFromPicker(this.value)" class="w-5 h-5 rounded cursor-pointer bg-transparent border-0">
                         <input type="text" id="bg_color" value="#030712" maxlength="7" class="w-16 bg-transparent text-xs text-white font-mono uppercase focus:outline-none">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Color de Acento (Bordes e Iconos) -->
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-2">Color de Acento (Bordes de Avatar e Iconos)</label>
+                  <div class="flex flex-wrap items-center gap-2.5">
+                    <button type="button" onclick="setThemeColor('#0284c7')" class="w-8 h-8 rounded-full bg-[#0284c7] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Azul Océano"></button>
+                    <button type="button" onclick="setThemeColor('#059669')" class="w-8 h-8 rounded-full bg-[#059669] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Verde Esmeralda"></button>
+                    <button type="button" onclick="setThemeColor('#7c3aed')" class="w-8 h-8 rounded-full bg-[#7c3aed] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Violeta"></button>
+                    <button type="button" onclick="setThemeColor('#db2777')" class="w-8 h-8 rounded-full bg-[#db2777] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Rosa Vibrante"></button>
+                    <button type="button" onclick="setThemeColor('#f59e0b')" class="w-8 h-8 rounded-full bg-[#f59e0b] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Dorado / Ámbar"></button>
+                    <button type="button" onclick="setThemeColor('#78350f')" class="w-8 h-8 rounded-full bg-[#78350f] ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent focus:ring-white transition" title="Café Gourmet"></button>
+
+                    <div class="flex items-center gap-2 ml-auto">
+                      <span class="text-xs text-slate-400 font-mono">Hex:</span>
+                      <div class="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-xl">
+                        <input type="color" id="themeColorPicker" value="#0284c7" onchange="syncThemeColorFromPicker(this.value)" class="w-5 h-5 rounded cursor-pointer bg-transparent border-0">
+                        <input type="text" id="theme_color" value="#0284c7" maxlength="7" class="w-16 bg-transparent text-xs text-white font-mono uppercase focus:outline-none">
                       </div>
                     </div>
                   </div>
@@ -642,10 +671,10 @@
                     </div>
                   </div>
 
-                  <!-- Botón Principal: WhatsApp -->
+                  <!-- Botón Principal: WhatsApp (Color Verde Oficial Referencial) -->
                   <div class="mb-3">
-                    <div id="prevWhatsappBtn" class="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-emerald-600 text-white text-xs font-semibold shadow-md shadow-emerald-950 cursor-default">
-                      <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2z"/></svg>
+                    <div id="prevWhatsappBtn" class="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-[#25D366] text-white text-xs font-semibold shadow-md shadow-emerald-950/40 cursor-default">
+                      <svg class="w-4 h-4 fill-current text-white" viewBox="0 0 24 24"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2z"/></svg>
                       <span>Contactar por WhatsApp</span>
                     </div>
                   </div>
@@ -674,7 +703,7 @@
 
                   <!-- Botón Guardar Contacto (vCard) -->
                   <div class="mt-4 pt-3 border-t border-slate-800">
-                    <div class="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-medium">
+                    <div id="prevVcardBtn" class="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-medium">
                       <i data-lucide="contact" class="w-3.5 h-3.5 text-cyan-400"></i>
                       <span>Guardar Contacto (.vcf)</span>
                     </div>
