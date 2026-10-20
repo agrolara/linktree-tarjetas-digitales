@@ -1,0 +1,40 @@
+{
+  "id": "tarjetas-de-contactos",
+  "name": "Tarjetas de Contactos Pro",
+  "formerName": "LinkCard Pro - Linktree Tarjetas Digitales",
+  "category": "SaaS & Web Applications",
+  "status": "Producción",
+  "author": "Mauricio Lara",
+  "domains": {
+    "primary": "https://tarjetasdecontactos.agrolara.dedyn.io",
+    "singular": "https://tarjetadecontactos.agrolara.dedyn.io",
+    "legacy": "https://linktree-tarjetas-digitales.agrolara.dedyn.io"
+  },
+  "repository": "https://github.com/agrolara/linktree-tarjetas-digitales",
+  "technologies": [
+    "Node.js",
+    "Express",
+    "Supabase",
+    "PostgreSQL",
+    "Tailwind CSS",
+    "JavaScript",
+    "Docker",
+    "Coolify",
+    "Traefik",
+    "vCard 3.0",
+    "Canvas QR"
+  ],
+  "features": [
+    "Multi-tenant con roles de Superadministrador, Colaboradores y Clientes",
+    "Generador de tarjetas de presentación digitales interactivas con URLs únicas (/u/slug)",
+    "Descarga de contactos vCard 3.0 (.vcf) para iPhone y Android",
+    "Generación de códigos QR en alta resolución para impresión física y descarga",
+    "Botonera dinámica con enlaces y URLs ilimitadas y selector de iconos temáticos",
+    "Bloque de texto libre / biografía comercial para horarios y servicios",
+    "Banner de portada panorámico con soporte para Google Drive",
+    "Personalizador de color de botones conservando el verde referencial de WhatsApp (#25D366)",
+    "Selector de color de fondo con contraste inteligente adaptativo (isColorLight)",
+    "Simulador de smartphone reactivo en tiempo real"
+  ],
+  "updatedAt": "2026-10-20"
+}
