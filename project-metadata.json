@@ -6,8 +6,7 @@
   "status": "Producción",
   "author": "Mauricio Lara",
   "domains": {
-    "primary": "https://tarjetasdecontactos.agrolara.dedyn.io",
-    "singular": "https://tarjetadecontactos.agrolara.dedyn.io",
+    "primary": "https://tarjetadecontactos.agrolara.dedyn.io",
     "legacy": "https://linktree-tarjetas-digitales.agrolara.dedyn.io"
   },
   "repository": "https://github.com/agrolara/linktree-tarjetas-digitales",

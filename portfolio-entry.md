@@ -6,8 +6,7 @@ category: "SaaS & Web Applications"
 status: "Producción"
 featured: true
 date: "2026-10-20"
-liveUrl: "https://tarjetasdecontactos.agrolara.dedyn.io"
-backupUrl: "https://tarjetadecontactos.agrolara.dedyn.io"
+liveUrl: "https://tarjetadecontactos.agrolara.dedyn.io"
 legacyUrl: "https://linktree-tarjetas-digitales.agrolara.dedyn.io"
 githubUrl: "https://github.com/agrolara/linktree-tarjetas-digitales"
 author: "Mauricio Lara"
@@ -72,7 +71,6 @@ Plataforma web de última generación concebida para la creación, gestión y di
 
 ## 🌐 Enlaces del Proyecto
 
-- **Dominio Principal:** [https://tarjetasdecontactos.agrolara.dedyn.io](https://tarjetasdecontactos.agrolara.dedyn.io)
-- **Dominio Secundario:** [https://tarjetadecontactos.agrolara.dedyn.io](https://tarjetadecontactos.agrolara.dedyn.io)
+- **Dominio Principal:** [https://tarjetadecontactos.agrolara.dedyn.io](https://tarjetadecontactos.agrolara.dedyn.io)
 - **Dominio Histórico de Respaldo:** [https://linktree-tarjetas-digitales.agrolara.dedyn.io](https://linktree-tarjetas-digitales.agrolara.dedyn.io)
 - **Repositorio GitHub:** [agrolara/linktree-tarjetas-digitales](https://github.com/agrolara/linktree-tarjetas-digitales)
